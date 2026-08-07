@@ -20,7 +20,7 @@ export function BucketModel({
       new MeshLambertMaterial({
         color: paintColor,
       }),
-    [],
+    [paintColor],
   );
   return (
     <group {...props} dispose={null}>
