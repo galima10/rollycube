@@ -9,11 +9,10 @@ type BucketModelProps = ThreeElements["group"] & {
   paintColor: string;
 };
 
-export function BucketModel({
-  paintColor,
-  ...props
-}: BucketModelProps) {
-  const { nodes } = useGLTF(`${import.meta.env.BASE_URL}models/bucket.glb`) as BucketGLTFResult;
+export function BucketModel({ paintColor, ...props }: BucketModelProps) {
+  const { nodes } = useGLTF(
+    `${import.meta.env.BASE_URL}models/bucket.glb`,
+  ) as BucketGLTFResult;
   const materials = getBucketMaterials();
   const paintMaterial = useMemo(
     () =>
@@ -24,7 +23,7 @@ export function BucketModel({
   );
   return (
     <group {...props} dispose={null}>
-      <group scale={1.5}>
+      <group rotation={[Math.PI, 0, Math.PI]} scale={1.5}>
         <mesh geometry={nodes.Cube009.geometry} material={materials.body} />
         <mesh geometry={nodes.Cube009_1.geometry} material={materials.handle} />
         <mesh geometry={nodes.Paint.geometry} material={paintMaterial} />

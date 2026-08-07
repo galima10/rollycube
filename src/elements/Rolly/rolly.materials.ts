@@ -1,19 +1,23 @@
 import { useMemo } from "react";
 import { MeshStandardMaterial } from "three";
 
-export function getBucketMaterials() {
+export function getRollyMaterials() {
   const materials = {
-    body: useMemo(
+    eye: useMemo(
       () =>
         new MeshStandardMaterial({
-          color: "#e7e9eb",
+          color: "#fff",
+          roughness: 1,
+          metalness: 0
         }),
       [],
     ),
-    handle: useMemo(
+    pupil: useMemo(
       () =>
         new MeshStandardMaterial({
-          color: "#6e4b34",
+          color: "#000",
+          roughness: 1,
+          metalness: 0
         }),
       [],
     ),
