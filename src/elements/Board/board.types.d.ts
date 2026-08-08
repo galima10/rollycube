@@ -14,4 +14,9 @@ export interface BoardType {
   tiles: {
     [tileId: number]: TileInfosType;
   };
+  borders: {
+    [borderId: number]: {
+      isGrabbing: boolean;
+    };
+  };
 }

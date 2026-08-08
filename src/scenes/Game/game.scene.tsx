@@ -9,19 +9,14 @@ export default function GameScene() {
   const {
     tileHovered,
     hoverTile,
-    // handleRollyPointerDown,
     interactions,
-    // dragRolly,
-    handleRollyPointerUp,
     tileRefs,
     gameInfos,
     resetGame,
     rollyRef,
-    // snapRolly
-    animations
+    boardRef,
+    animations,
   } = useGame();
-  // const { rolly } = animations;
-  // const { rolly} = interactions
 
   return (
     <Canvas
@@ -31,7 +26,8 @@ export default function GameScene() {
         near: 0.1,
         far: 100,
       }}
-      onPointerUp={handleRollyPointerUp}
+      onPointerUp={interactions.canvas.handlePointerUp}
+      onPointerMove={interactions.canvas.handleBoardPointerMove}
     >
       <OrbitControls
         enablePan={false}
@@ -42,22 +38,29 @@ export default function GameScene() {
         }}
       />
       <Environment preset="warehouse" />
-      <RollyModel
-        scale={[0.5, 0.5, 0.5]}
-        paintColor={gameInfos.rolly.color}
-        position={[0, 0.6, 0]}
-        rollyRef={rollyRef}
-        rolly={{
-          animations: animations.rolly,
-          interactions: interactions.rolly
-        }}
-      />
-      <BoardModel
-        hoverTile={hoverTile}
-        tileHovered={tileHovered}
-        tileRefs={tileRefs}
-        board={gameInfos.board}
-      />
+      <group ref={boardRef} dispose={null}>
+        <RollyModel
+          scale={[0.5, 0.5, 0.5]}
+          paintColor={gameInfos.rolly.color}
+          position={[0, 0.6, 0]}
+          rollyRef={rollyRef}
+          rolly={{
+            animations: animations.rolly,
+            interactions: interactions.rolly,
+          }}
+        />
+        <BoardModel
+          hoverTile={hoverTile}
+          tileHovered={tileHovered}
+          tileRefs={tileRefs}
+          board={{
+            infos: gameInfos.board,
+            interactions: interactions.board,
+            animations: animations.board,
+          }}
+          // boardRef={boardRef}
+        />
+      </group>
     </Canvas>
   );
 }

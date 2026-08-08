@@ -1,7 +1,8 @@
-import { Color, type Vector3Tuple, type Mesh } from "three";
+import { Color, type Vector3Tuple, type Mesh, type Group } from "three";
 import { Edges } from "@react-three/drei";
 import type { BoardSizeType, BoardType, TileInfosType } from "./board.types";
 import { type RefObject } from "react";
+import { type ThreeEvent, useFrame } from "@react-three/fiber";
 
 const tileSize = 1;
 
@@ -14,20 +15,40 @@ export default function BoardModel({
   hoverTile: (tileId: number | null) => void;
   tileHovered: null | number;
   tileRefs: RefObject<Map<number, Mesh>>;
-  board: BoardType;
+  board: {
+    infos: BoardType;
+    interactions: {
+      handleBorderPointerDown: (
+        e: ThreeEvent<PointerEvent>,
+        borderId: number,
+      ) => void;
+    };
+    animations: {
+      leanBoard: (delta: number) => void;
+      returnBoard: (delta: number) => void;
+    };
+  };
 }) {
-  const size = Math.sqrt(Object.keys(board.tiles).length);
+  const size = Math.sqrt(Object.keys(board.infos.tiles).length);
   const boardColor = "#a5a9ab";
+  useFrame((_, delta) => {
+    board.animations.leanBoard(delta);
+    board.animations.returnBoard(delta);
+  });
   return (
-    <group>
+    <group dispose={null}  rotation={[0, 0, 0]}>
       <Tiles
         tileSize={tileSize}
         hoverTile={hoverTile}
         tileHovered={tileHovered}
         tileRefs={tileRefs}
-        board={board}
+        board={board.infos}
       />
-      <Border size={size * tileSize} color={boardColor} />
+      <Border
+        size={size * tileSize}
+        color={boardColor}
+        interactions={board.interactions}
+      />
       <mesh position={[0, -0.5, 0]}>
         <boxGeometry args={[size * tileSize, 1, size * tileSize]} />
         <meshStandardMaterial color={boardColor} />
@@ -115,32 +136,57 @@ function Tiles({
   );
 }
 
-function Border({ size, color }: { size: number; color: string }) {
+function Border({
+  size,
+  color,
+  interactions,
+}: {
+  size: number;
+  color: string;
+  interactions: {
+    handleBorderPointerDown: (
+      e: ThreeEvent<PointerEvent>,
+      borderId: number,
+    ) => void;
+  };
+}) {
   const thickness = tileSize / 3;
   const height = 1.16;
 
   return (
     <group position={[0, -0.42, 0]}>
       {/* haut */}
-      <mesh position={[0, 0, size / 2 + thickness / 2]}>
+      <mesh
+        position={[0, 0, size / 2 + thickness / 2]}
+        onPointerDown={(e) => interactions.handleBorderPointerDown(e, 0)}
+      >
         <boxGeometry args={[size + thickness * 2, height, thickness]} />
         <meshStandardMaterial color={color} />
       </mesh>
 
       {/* bas */}
-      <mesh position={[0, 0, -size / 2 - thickness / 2]}>
+      <mesh
+        position={[0, 0, -size / 2 - thickness / 2]}
+        onPointerDown={(e) => interactions.handleBorderPointerDown(e, 1)}
+      >
         <boxGeometry args={[size + thickness * 2, height, thickness]} />
         <meshStandardMaterial color={color} />
       </mesh>
 
       {/* gauche */}
-      <mesh position={[-size / 2 - thickness / 2, 0, 0]}>
+      <mesh
+        position={[-size / 2 - thickness / 2, 0, 0]}
+        onPointerDown={(e) => interactions.handleBorderPointerDown(e, 2)}
+      >
         <boxGeometry args={[thickness, height, size + thickness * 2]} />
         <meshStandardMaterial color={color} />
       </mesh>
 
       {/* droite */}
-      <mesh position={[size / 2 + thickness / 2, 0, 0]}>
+      <mesh
+        position={[size / 2 + thickness / 2, 0, 0]}
+        onPointerDown={(e) => interactions.handleBorderPointerDown(e, 3)}
+      >
         <boxGeometry args={[thickness, height, size + thickness * 2]} />
         <meshStandardMaterial color={color} />
       </mesh>

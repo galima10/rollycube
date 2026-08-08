@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import type { GameInfos } from "./game.types";
-import type { TileInfosType, BoardType } from "@/elements/Board/board.types";
-import { type Mesh, type Group, MathUtils, Vector3Tuple } from "three";
+import type { TileInfosType } from "@/elements/Board/board.types";
+import { type Mesh, type Group, MathUtils, type Vector3Tuple } from "three";
 import type { ThreeEvent } from "@react-three/fiber";
 import { createBoard } from "@/elements/Board/utils/create-board.utils";
 
@@ -14,8 +14,19 @@ interface RollyDragState {
   lastValidTileId: number | null;
 }
 
+interface BoardDragState {
+  clientY: number;
+  startClientY: number;
+  borderId: number;
+  boardRotation: {
+    x: number;
+    z: number;
+  };
+}
+
 export function useGame() {
   const tileRefs = useRef<Map<number, Mesh>>(new Map());
+  const boardRef = useRef<Group>(null);
   const rollyRef = useRef<Group>(null);
   const [tileHovered, setTileHovered] = useState<null | number>(null);
   const [gameInfos, setGameInfos] = useState<GameInfos>({
@@ -49,6 +60,7 @@ export function useGame() {
         color: "green",
       },
     },
+    grabbing: null,
   });
 
   const rollyDrag = useRef<RollyDragState>({
@@ -60,12 +72,23 @@ export function useGame() {
     lastValidTileId: null,
   });
 
+  const boardDrag = useRef<BoardDragState>({
+    clientY: 0,
+    startClientY: 0,
+    borderId: 0,
+    boardRotation: {
+      x: 0,
+      z: 0,
+    },
+  });
+
   function resetGame() {
     setGameInfos({
       state: "startscreen",
       board: {
         boardSize: 8,
         tiles: {},
+        borders: {},
       },
       rolly: {
         color: "#ffe920",
@@ -95,6 +118,7 @@ export function useGame() {
           color: "green",
         },
       },
+      grabbing: null,
     });
   }
 
@@ -121,9 +145,10 @@ export function useGame() {
         },
         isDragging: true,
       },
+      grabbing: "rolly",
     }));
   }
-  function handleRollyPointerUp() {
+  function rollyPointerUp() {
     if (!gameInfos.rolly.isDragging) return;
     const lastTileId = rollyDrag.current.lastValidTileId;
     document.body.style.cursor = "default";
@@ -271,26 +296,225 @@ export function useGame() {
     );
   }
 
+  function handleBorderPointerDown(
+    e: ThreeEvent<PointerEvent>,
+    borderId: number,
+  ) {
+    if (
+      gameInfos.rolly.isDragging ||
+      gameInfos.rolly.isFalling ||
+      rollyDrag.current.targetPosition
+    ) {
+      return;
+    }
+
+    e.stopPropagation();
+
+    boardDrag.current = {
+      clientY: e.clientY,
+      startClientY: e.clientY,
+      borderId: borderId,
+      boardRotation: {
+        x: boardRef.current.rotation.x,
+        z: boardRef.current.rotation.z,
+      },
+    };
+
+    setGameInfos((prev) => ({
+      ...prev,
+      board: {
+        ...prev.board,
+        borders: {
+          ...prev.board.borders,
+          [borderId]: {
+            isGrabbing: true,
+          },
+        },
+      },
+      grabbing: "board",
+    }));
+  }
+
+  function borderPointerUp() {
+    if (
+      gameInfos.rolly.isDragging ||
+      gameInfos.rolly.isFalling ||
+      rollyDrag.current.targetPosition
+    ) {
+      return;
+    }
+
+    setGameInfos((prev) => ({
+      ...prev,
+      board: {
+        ...prev.board,
+        borders: Object.fromEntries(
+          Object.entries(prev.board.borders).map(([borderId, border]) => [
+            borderId,
+            {
+              ...border,
+              isGrabbing: false,
+            },
+          ]),
+        ),
+      },
+      grabbing: null,
+    }));
+
+    boardDrag.current = {
+      ...boardDrag.current,
+      clientY: null,
+      startClientY: null,
+      borderId: null,
+    };
+  }
+
+  // function handleBoardPointerMove(e: ThreeEvent<PointerEvent>) {
+  //   if (gameInfos.grabbing !== "board") return;
+
+  //   boardDrag.current.clientY = e.clientY;
+  // }
+  function handleBoardPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (gameInfos.grabbing !== "board") return;
+
+    boardDrag.current.clientY = e.clientY;
+  }
+
+  function returnBoard(delta: number) {
+    const allBordersReleased = Object.values(gameInfos.board.borders).every(
+      (border) => !border.isGrabbing,
+    );
+
+    if (!allBordersReleased) return;
+    if (gameInfos.grabbing !== null) return;
+
+    const speed = 5;
+
+    boardRef.current.rotation.x = MathUtils.damp(
+      boardRef.current.rotation.x,
+      0,
+      speed,
+      delta,
+    );
+
+    boardRef.current.rotation.z = MathUtils.damp(
+      boardRef.current.rotation.z,
+      0,
+      speed,
+      delta,
+    );
+
+    // Évite de rester avec des valeurs minuscules
+    if (
+      Math.abs(boardRef.current.rotation.x) < 0.001 &&
+      Math.abs(boardRef.current.rotation.z) < 0.001
+    ) {
+      boardRef.current.rotation.x = 0;
+      boardRef.current.rotation.z = 0;
+    }
+  }
+
+  function leanBoard(delta: number) {
+    if (gameInfos.grabbing !== "board") return;
+
+    const { borderId, clientY, startClientY, boardRotation } =
+      boardDrag.current;
+
+    if (borderId === null || clientY === null || startClientY === null) {
+      return;
+    }
+
+    const deltaY = clientY - startClientY;
+    const maxAngle = Math.PI / 3;
+
+    const isNegative = borderId === 1 || borderId === 3;
+    const isX = borderId === 0 || borderId === 1;
+
+    const direction = isNegative ? -1 : 1;
+
+    const currentRotation = isX ? boardRotation.x : boardRotation.z;
+
+    const targetRotation = MathUtils.clamp(
+      currentRotation + deltaY * 0.01 * direction,
+      -maxAngle,
+      maxAngle,
+    );
+
+    const speed = 5;
+
+    if (isX) {
+      boardRef.current.rotation.x = MathUtils.damp(
+        boardRef.current.rotation.x,
+        targetRotation,
+        speed,
+        delta,
+      );
+
+      boardRef.current.rotation.x = MathUtils.clamp(
+        boardRef.current.rotation.x,
+        -maxAngle,
+        maxAngle,
+      );
+    } else {
+      boardRef.current.rotation.z = MathUtils.damp(
+        boardRef.current.rotation.z,
+        targetRotation,
+        speed,
+        delta,
+      );
+
+      boardRef.current.rotation.z = MathUtils.clamp(
+        boardRef.current.rotation.z,
+        -maxAngle,
+        maxAngle,
+      );
+    }
+  }
+
+  function handlePointerUp() {
+    rollyPointerUp();
+    borderPointerUp();
+    setGameInfos((prev) => ({
+      ...prev,
+      grabbing: null,
+    }));
+  }
+
   return {
     tileHovered,
     gameInfos,
     hoverTile,
     tileRefs,
     resetGame,
-    handleRollyPointerUp,
     rollyRef,
+    boardRef,
     animations: {
       rolly: {
         snapRolly,
         dragRolly,
       },
+      board: {
+        leanBoard,
+        returnBoard,
+      },
     },
     interactions: {
+      canvas: {
+        handleBoardPointerMove,
+        handlePointerUp,
+      },
       rolly: {
         handleRollyPointerDown,
         handleRollyPointerLeave,
-        handleRollyPointerEnter
-      }
-    }
+        handleRollyPointerEnter,
+      },
+      board: {
+        handleBorderPointerDown,
+      },
+    },
   };
 }
+
+export function useRolly(){}
+
+export function useBoard(){}

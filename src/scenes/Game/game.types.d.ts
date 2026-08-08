@@ -18,4 +18,5 @@ export interface GameInfos {
     bucket3: BucketType;
     bucket4: BucketType;
   };
+  grabbing: "rolly" | "board" | null;
 }

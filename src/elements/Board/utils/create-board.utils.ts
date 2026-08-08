@@ -16,8 +16,16 @@ export function createBoard(boardSize: BoardSizeType): BoardType {
       selected: false,
     };
   }
+
+  const borders: BoardType["borders"] = {};
+  for (let i = 0; i < 4; i++) {
+    borders[i] = {
+      isGrabbing: false,
+    };
+  }
   return {
     boardSize,
     tiles,
+    borders,
   };
 }
