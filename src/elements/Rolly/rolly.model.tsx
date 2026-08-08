@@ -12,10 +12,16 @@ import { useMemo, type RefObject } from "react";
 type RollyModelProps = ThreeElements["group"] & {
   paintColor: string;
   rollyRef: RefObject<Group>;
-  handleRollyPointerDown: (e: ThreeEvent<PointerEvent>) => void;
   rolly: {
-    dragRolly: (delta: number) => void;
-    snapRolly: (delta: number) => void;
+    animations: {
+      dragRolly: (delta: number) => void;
+      snapRolly: (delta: number) => void;
+    };
+    interactions: {
+      handleRollyPointerDown: (e: ThreeEvent<PointerEvent>) => void;
+      handleRollyPointerLeave: (e: ThreeEvent<PointerEvent>) => void;
+      handleRollyPointerEnter: (e: ThreeEvent<PointerEvent>) => void;
+    };
   };
 };
 
@@ -23,7 +29,6 @@ export function RollyModel({
   paintColor,
   rollyRef,
   rolly,
-  handleRollyPointerDown,
   ...props
 }: RollyModelProps) {
   const { nodes } = useGLTF(
@@ -38,15 +43,17 @@ export function RollyModel({
     [paintColor],
   );
   useFrame((_, delta) => {
-    rolly.dragRolly(delta);
-    rolly.snapRolly(delta);
+    rolly.animations.dragRolly(delta);
+    rolly.animations.snapRolly(delta);
   });
   return (
     <group
       {...props}
       dispose={null}
       ref={rollyRef}
-      onPointerDown={handleRollyPointerDown}
+      onPointerDown={rolly.interactions.handleRollyPointerDown}
+      onPointerEnter={rolly.interactions.handleRollyPointerEnter}
+      onPointerLeave={rolly.interactions.handleRollyPointerLeave}
     >
       <mesh
         geometry={nodes.Body.geometry}

@@ -9,7 +9,8 @@ export default function GameScene() {
   const {
     tileHovered,
     hoverTile,
-    handleRollyPointerDown,
+    // handleRollyPointerDown,
+    interactions,
     // dragRolly,
     handleRollyPointerUp,
     tileRefs,
@@ -19,7 +20,8 @@ export default function GameScene() {
     // snapRolly
     animations
   } = useGame();
-  const { rolly } = animations;
+  // const { rolly } = animations;
+  // const { rolly} = interactions
 
   return (
     <Canvas
@@ -45,8 +47,10 @@ export default function GameScene() {
         paintColor={gameInfos.rolly.color}
         position={[0, 0.6, 0]}
         rollyRef={rollyRef}
-        rolly={rolly}
-        handleRollyPointerDown={handleRollyPointerDown}
+        rolly={{
+          animations: animations.rolly,
+          interactions: interactions.rolly
+        }}
       />
       <BoardModel
         hoverTile={hoverTile}

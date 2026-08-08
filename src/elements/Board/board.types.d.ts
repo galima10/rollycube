@@ -1,4 +1,4 @@
-export type BoardSizeType = 8 | 16 | 24 | 32;
+export type BoardSizeType = 8 | 12;
 
 export interface TileInfosType {
   position: {

@@ -20,7 +20,7 @@ export function useGame() {
   const [tileHovered, setTileHovered] = useState<null | number>(null);
   const [gameInfos, setGameInfos] = useState<GameInfos>({
     state: "playing",
-    board: createBoard(8),
+    board: createBoard(12),
     rolly: {
       color: "#ffe920",
       position: {
@@ -109,6 +109,7 @@ export function useGame() {
   function handleRollyPointerDown(e: ThreeEvent<PointerEvent>) {
     if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) return;
     e.stopPropagation();
+    document.body.style.cursor = "grabbing";
     setGameInfos((prev) => ({
       ...prev,
       rolly: {
@@ -125,6 +126,7 @@ export function useGame() {
   function handleRollyPointerUp() {
     if (!gameInfos.rolly.isDragging) return;
     const lastTileId = rollyDrag.current.lastValidTileId;
+    document.body.style.cursor = "default";
 
     if (lastTileId === null) {
       rollyDrag.current.targetPosition = [
@@ -164,6 +166,16 @@ export function useGame() {
         isFalling: true,
       },
     }));
+  }
+
+  function handleRollyPointerEnter(e: ThreeEvent<PointerEvent>) {
+    e.stopPropagation();
+    document.body.style.cursor = "grab";
+  }
+  function handleRollyPointerLeave(e: ThreeEvent<PointerEvent>) {
+    if (gameInfos.rolly.isDragging) return;
+    e.stopPropagation();
+    document.body.style.cursor = "default";
   }
 
   function snapRolly(delta: number) {
@@ -265,7 +277,6 @@ export function useGame() {
     hoverTile,
     tileRefs,
     resetGame,
-    handleRollyPointerDown,
     handleRollyPointerUp,
     rollyRef,
     animations: {
@@ -274,5 +285,12 @@ export function useGame() {
         dragRolly,
       },
     },
+    interactions: {
+      rolly: {
+        handleRollyPointerDown,
+        handleRollyPointerLeave,
+        handleRollyPointerEnter
+      }
+    }
   };
 }
