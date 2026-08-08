@@ -4,19 +4,18 @@ import BoardModel from "@/elements/Board/board.model";
 import { MOUSE } from "three";
 import { OrbitControls, Environment } from "@react-three/drei";
 import { useGame } from "./game.hook";
+import { useBoard } from "@/elements/Board/board.hook";
+import { useRolly } from "@/elements/Rolly/rolly.hook";
 
 export default function GameScene() {
   const {
-    tileHovered,
-    hoverTile,
-    interactions,
-    tileRefs,
+    setGameInfos,
     gameInfos,
     resetGame,
-    rollyRef,
-    boardRef,
-    animations,
   } = useGame();
+
+  const { boardRef, board, tileRefs, hoverTile } = useBoard(gameInfos, setGameInfos);
+  const { rollyRef, rolly, } = useRolly(gameInfos, setGameInfos)
 
   return (
     <Canvas
@@ -26,8 +25,13 @@ export default function GameScene() {
         near: 0.1,
         far: 100,
       }}
-      onPointerUp={interactions.canvas.handlePointerUp}
-      onPointerMove={interactions.canvas.handleBoardPointerMove}
+      onPointerUp={() => {
+        board.interactions.handlePointerUp();
+        rolly.interactions.handlePointerUp();
+      }}
+      onPointerMove={(e) => {
+        board.interactions.handlePointerMove(e);
+      }}
     >
       <OrbitControls
         enablePan={false}
@@ -45,20 +49,19 @@ export default function GameScene() {
           position={[0, 0.6, 0]}
           rollyRef={rollyRef}
           rolly={{
-            animations: animations.rolly,
-            interactions: interactions.rolly,
+            animations: rolly.animations,
+            interactions: rolly.interactions,
           }}
         />
         <BoardModel
           hoverTile={hoverTile}
-          tileHovered={tileHovered}
+          tileHovered={gameInfos.board.tiles.tileHovered}
           tileRefs={tileRefs}
           board={{
             infos: gameInfos.board,
-            interactions: interactions.board,
-            animations: animations.board,
+            interactions: board.interactions,
+            animations: board.animations,
           }}
-          // boardRef={boardRef}
         />
       </group>
     </Canvas>

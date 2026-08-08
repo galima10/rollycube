@@ -1,13 +1,17 @@
-import type { BoardSizeType, BoardType } from "../board.types";
+import type { BoardSizeType, BoardType } from "./board.types";
 
 export function createBoard(boardSize: BoardSizeType): BoardType {
-  const tiles: BoardType["tiles"] = {};
+  const tiles: BoardType["tiles"] = {
+    tileHovered: null,
+    lastValidTileId: null,
+    grid: {}
+  };
 
   for (let i = 0; i < boardSize * boardSize; i++) {
     const x = i % boardSize;
     const z = Math.floor(i / boardSize);
 
-    tiles[i] = {
+    tiles.grid[i] = {
       position: {
         x: x - boardSize / 2 + 0.5,
         z: z - boardSize / 2 + 0.5,

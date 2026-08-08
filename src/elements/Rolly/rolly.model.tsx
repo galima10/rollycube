@@ -18,9 +18,9 @@ type RollyModelProps = ThreeElements["group"] & {
       snapRolly: (delta: number) => void;
     };
     interactions: {
-      handleRollyPointerDown: (e: ThreeEvent<PointerEvent>) => void;
-      handleRollyPointerLeave: (e: ThreeEvent<PointerEvent>) => void;
-      handleRollyPointerEnter: (e: ThreeEvent<PointerEvent>) => void;
+      handlePointerDown: (e: ThreeEvent<PointerEvent>) => void;
+      handlePointerLeave: (e: ThreeEvent<PointerEvent>) => void;
+      handlePointerEnter: (e: ThreeEvent<PointerEvent>) => void;
     };
   };
 };
@@ -51,9 +51,9 @@ export function RollyModel({
       {...props}
       dispose={null}
       ref={rollyRef}
-      onPointerDown={rolly.interactions.handleRollyPointerDown}
-      onPointerEnter={rolly.interactions.handleRollyPointerEnter}
-      onPointerLeave={rolly.interactions.handleRollyPointerLeave}
+      onPointerDown={rolly.interactions.handlePointerDown}
+      onPointerEnter={rolly.interactions.handlePointerEnter}
+      onPointerLeave={rolly.interactions.handlePointerLeave}
     >
       <mesh
         geometry={nodes.Body.geometry}

@@ -12,7 +12,11 @@ export interface TileInfosType {
 export interface BoardType {
   boardSize: BoardSizeType;
   tiles: {
-    [tileId: number]: TileInfosType;
+    tileHovered: number | null;
+    lastValidTileId: number | null;
+    grid: {
+      [tileId: number]: TileInfosType;
+    };
   };
   borders: {
     [borderId: number]: {

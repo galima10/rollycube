@@ -18,10 +18,12 @@ export default function BoardModel({
   board: {
     infos: BoardType;
     interactions: {
-      handleBorderPointerDown: (
+      handlePointerDown: (
         e: ThreeEvent<PointerEvent>,
         borderId: number,
       ) => void;
+      handlePointerEnter: (e: ThreeEvent<PointerEvent>) => void;
+      handlePointerLeave: (e: ThreeEvent<PointerEvent>) => void;
     };
     animations: {
       leanBoard: (delta: number) => void;
@@ -29,14 +31,14 @@ export default function BoardModel({
     };
   };
 }) {
-  const size = Math.sqrt(Object.keys(board.infos.tiles).length);
+  const size = Math.sqrt(Object.keys(board.infos.tiles.grid).length);
   const boardColor = "#a5a9ab";
   useFrame((_, delta) => {
     board.animations.leanBoard(delta);
     board.animations.returnBoard(delta);
   });
   return (
-    <group dispose={null}  rotation={[0, 0, 0]}>
+    <group dispose={null} rotation={[0, 0, 0]}>
       <Tiles
         tileSize={tileSize}
         hoverTile={hoverTile}
@@ -116,7 +118,7 @@ function Tiles({
 }) {
   return (
     <>
-      {Object.entries(board.tiles).map(([id, tile]) => {
+      {Object.entries(board.tiles.grid).map(([id, tile]) => {
         const tileId = Number(id);
 
         return (
@@ -144,10 +146,9 @@ function Border({
   size: number;
   color: string;
   interactions: {
-    handleBorderPointerDown: (
-      e: ThreeEvent<PointerEvent>,
-      borderId: number,
-    ) => void;
+    handlePointerDown: (e: ThreeEvent<PointerEvent>, borderId: number) => void;
+    handlePointerEnter: (e: ThreeEvent<PointerEvent>) => void;
+    handlePointerLeave: (e: ThreeEvent<PointerEvent>) => void;
   };
 }) {
   const thickness = tileSize / 3;
@@ -158,7 +159,9 @@ function Border({
       {/* haut */}
       <mesh
         position={[0, 0, size / 2 + thickness / 2]}
-        onPointerDown={(e) => interactions.handleBorderPointerDown(e, 0)}
+        onPointerDown={(e) => interactions.handlePointerDown(e, 0)}
+        onPointerEnter={interactions.handlePointerEnter}
+        onPointerLeave={interactions.handlePointerLeave}
       >
         <boxGeometry args={[size + thickness * 2, height, thickness]} />
         <meshStandardMaterial color={color} />
@@ -167,7 +170,9 @@ function Border({
       {/* bas */}
       <mesh
         position={[0, 0, -size / 2 - thickness / 2]}
-        onPointerDown={(e) => interactions.handleBorderPointerDown(e, 1)}
+        onPointerDown={(e) => interactions.handlePointerDown(e, 1)}
+        onPointerEnter={interactions.handlePointerEnter}
+        onPointerLeave={interactions.handlePointerLeave}
       >
         <boxGeometry args={[size + thickness * 2, height, thickness]} />
         <meshStandardMaterial color={color} />
@@ -176,7 +181,9 @@ function Border({
       {/* gauche */}
       <mesh
         position={[-size / 2 - thickness / 2, 0, 0]}
-        onPointerDown={(e) => interactions.handleBorderPointerDown(e, 2)}
+        onPointerDown={(e) => interactions.handlePointerDown(e, 2)}
+        onPointerEnter={interactions.handlePointerEnter}
+        onPointerLeave={interactions.handlePointerLeave}
       >
         <boxGeometry args={[thickness, height, size + thickness * 2]} />
         <meshStandardMaterial color={color} />
@@ -185,7 +192,9 @@ function Border({
       {/* droite */}
       <mesh
         position={[size / 2 + thickness / 2, 0, 0]}
-        onPointerDown={(e) => interactions.handleBorderPointerDown(e, 3)}
+        onPointerDown={(e) => interactions.handlePointerDown(e, 3)}
+        onPointerEnter={interactions.handlePointerEnter}
+        onPointerLeave={interactions.handlePointerLeave}
       >
         <boxGeometry args={[thickness, height, size + thickness * 2]} />
         <meshStandardMaterial color={color} />
