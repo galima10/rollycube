@@ -2,7 +2,6 @@ import type { BoardSizeType, BoardType } from "./board.types";
 
 export function createBoard(boardSize: BoardSizeType): BoardType {
   const tiles: BoardType["tiles"] = {
-    tileHovered: null,
     lastValidTileId: null,
     grid: {}
   };
@@ -17,7 +16,6 @@ export function createBoard(boardSize: BoardSizeType): BoardType {
         z: z - boardSize / 2 + 0.5,
       },
       color: "#616365",
-      selected: false,
     };
   }
 

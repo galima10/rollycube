@@ -5,14 +5,12 @@ export interface TileInfosType {
     x: number;
     z: number;
   };
-  color: string;
-  selected: boolean;
+  color?: string;
 }
 
 export interface BoardType {
   boardSize: BoardSizeType;
   tiles: {
-    tileHovered: number | null;
     lastValidTileId: number | null;
     grid: {
       [tileId: number]: TileInfosType;

@@ -14,13 +14,14 @@ type RollyModelProps = ThreeElements["group"] & {
   rollyRef: RefObject<Group>;
   rolly: {
     animations: {
-      dragRolly: (delta: number) => void;
-      snapRolly: (delta: number) => void;
+      dragRolly?: (delta: number) => void;
+      snapRolly?: (delta: number) => void;
+      syncRollyWorldToRollyBoard?: () => void
     };
     interactions: {
-      handlePointerDown: (e: ThreeEvent<PointerEvent>) => void;
-      handlePointerLeave: (e: ThreeEvent<PointerEvent>) => void;
-      handlePointerEnter: (e: ThreeEvent<PointerEvent>) => void;
+      handlePointerDown?: (e: ThreeEvent<PointerEvent>) => void;
+      handlePointerLeave?: (e: ThreeEvent<PointerEvent>) => void;
+      handlePointerEnter?: (e: ThreeEvent<PointerEvent>) => void;
     };
   };
 };
@@ -43,8 +44,9 @@ export function RollyModel({
     [paintColor],
   );
   useFrame((_, delta) => {
-    rolly.animations.dragRolly(delta);
-    rolly.animations.snapRolly(delta);
+    rolly.animations.dragRolly?.(delta);
+    rolly.animations.snapRolly?.(delta);
+    rolly.animations.syncRollyWorldToRollyBoard?.();
   });
   return (
     <group

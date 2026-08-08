@@ -32,20 +32,16 @@ export function useBoard(
 
   function hoverTile(tileId: number | null) {
     if (!gameInfos.rolly.isDragging) return;
-    // setTileHovered(tileId);
     setGameInfos((prev) => ({
       ...prev,
-      board: {
-        ...prev.board,
-        tiles: {
-          ...prev.board.tiles,
-          tileHovered: tileId,
-        },
+      tileHovered: {
+        type: "board",
+        id: tileId,
       },
     }));
+    // console.log(gameInfos.tileHovered.id)
 
     if (tileId !== null) {
-      // rollyDrag.current.lastValidTileId = tileId;
       setGameInfos((prev) => ({
         ...prev,
         board: {
@@ -55,6 +51,10 @@ export function useBoard(
             lastValidTileId: tileId,
           },
         },
+        // tileHovered: {
+        //   type: "board",
+        //   id: tileId,
+        // },
       }));
     }
   }
@@ -67,10 +67,7 @@ export function useBoard(
     e.stopPropagation();
     document.body.style.cursor = "default";
   }
-  function handlePointerDown(
-    e: ThreeEvent<PointerEvent>,
-    borderId: number,
-  ) {
+  function handlePointerDown(e: ThreeEvent<PointerEvent>, borderId: number) {
     if (e.button !== 0) return;
     if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) {
       return;
