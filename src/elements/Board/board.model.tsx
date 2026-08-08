@@ -1,6 +1,6 @@
 import { Color, type Vector3Tuple, type Mesh } from "three";
 import { Edges } from "@react-three/drei";
-import type { BoardSizeType, BoardType } from "./board.types";
+import type { BoardSizeType, BoardType, TileInfosType } from "./board.types";
 import { type RefObject } from "react";
 
 const tileSize = 1;
@@ -43,7 +43,7 @@ function TileModel({
   tileHovered,
   tileId,
   tileRefs,
-  board,
+  tile,
 }: {
   position: Vector3Tuple;
   tileSize: number;
@@ -51,9 +51,8 @@ function TileModel({
   tileHovered: null | number;
   tileId: number;
   tileRefs: RefObject<Map<number, Mesh>>;
-  board: BoardType;
+  tile: TileInfosType;
 }) {
-  const tile = board.tiles[tileId];
   return (
     <mesh
       position={position}
@@ -108,7 +107,7 @@ function Tiles({
             tileHovered={tileHovered}
             tileRefs={tileRefs}
             tileSize={tileSize}
-            board={board}
+            tile={tile}
           />
         );
       })}

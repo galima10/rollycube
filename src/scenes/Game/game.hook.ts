@@ -1,12 +1,15 @@
 import { useState, useRef } from "react";
 import type { GameInfos } from "./game.types";
-import type { TileInfosType } from "@/elements/Board/board.types";
+import type { TileInfosType, BoardType } from "@/elements/Board/board.types";
 import { type Mesh, type Group, MathUtils, Vector3Tuple } from "three";
 import type { ThreeEvent } from "@react-three/fiber";
 import { createBoard } from "@/elements/Board/utils/create-board.utils";
 
 interface RollyDragState {
-  targetTile: TileInfosType | null;
+  targetTile: {
+    tileId: number | null;
+    infos: TileInfosType | null;
+  };
   targetPosition: Vector3Tuple | null;
   lastValidTileId: number | null;
 }
@@ -49,7 +52,10 @@ export function useGame() {
   });
 
   const rollyDrag = useRef<RollyDragState>({
-    targetTile: null,
+    targetTile: {
+      tileId: null,
+      infos: null,
+    },
     targetPosition: null,
     lastValidTileId: null,
   });
@@ -93,6 +99,7 @@ export function useGame() {
   }
 
   function hoverTile(tileId: number | null) {
+    if (!gameInfos.rolly.isDragging) return;
     setTileHovered(tileId);
 
     if (tileId !== null) {
@@ -100,7 +107,7 @@ export function useGame() {
     }
   }
   function handleRollyPointerDown(e: ThreeEvent<PointerEvent>) {
-    if (gameInfos.rolly.isDragging) return;
+    if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) return;
     e.stopPropagation();
     setGameInfos((prev) => ({
       ...prev,
@@ -130,6 +137,7 @@ export function useGame() {
         rolly: {
           ...prev.rolly,
           isDragging: false,
+          isFalling: true,
         },
       }));
       return;
@@ -153,14 +161,22 @@ export function useGame() {
           z: tile.position.z,
         },
         isDragging: false,
+        isFalling: true,
       },
     }));
   }
 
   function snapRolly(delta: number) {
-    if (!rollyDrag.current.targetPosition || gameInfos.rolly.isDragging) return;
+    if (!rollyDrag.current.targetPosition) return;
 
     const [targetX, , targetZ] = rollyDrag.current.targetPosition;
+
+    if (
+      rollyRef.current.position.x === targetX &&
+      rollyRef.current.position.y === 0.6 &&
+      rollyRef.current.position.z === targetZ
+    )
+      return;
 
     rollyRef.current.position.x = MathUtils.lerp(
       rollyRef.current.position.x,
@@ -180,11 +196,38 @@ export function useGame() {
       delta * 10,
     );
 
-    if (
-      rollyRef.current.position.x === targetX &&
-      rollyRef.current.position.z === targetZ
-    )
+    const distance = Math.sqrt(
+      (rollyRef.current.position.x - targetX) ** 2 +
+        (rollyRef.current.position.y - 0.6) ** 2 +
+        (rollyRef.current.position.z - targetZ) ** 2,
+    );
+
+    if (distance < 0.01) {
+      // Force la position exacte
+      rollyRef.current.position.x = targetX;
+      rollyRef.current.position.y = 0.6;
+      rollyRef.current.position.z = targetZ;
+
       rollyDrag.current.targetPosition = null;
+
+      setGameInfos((prev) => ({
+        ...prev,
+        board: {
+          ...prev.board,
+          tiles: {
+            ...prev.board.tiles,
+            [rollyDrag.current.targetTile.tileId]: {
+              ...prev.board.tiles[rollyDrag.current.targetTile.tileId],
+              color: gameInfos.rolly.color,
+            },
+          },
+        },
+        rolly: {
+          ...prev.rolly,
+          isFalling: false,
+        },
+      }));
+    }
   }
 
   function dragRolly(delta: number) {
@@ -192,17 +235,20 @@ export function useGame() {
     const tileId = tileHovered ?? rollyDrag.current.lastValidTileId;
     if (tileId === null) return;
 
-    rollyDrag.current.targetTile = gameInfos.board.tiles[tileId];
+    rollyDrag.current.targetTile = {
+      tileId: tileId,
+      infos: gameInfos.board.tiles[tileId],
+    };
 
     rollyRef.current.position.x = MathUtils.lerp(
       rollyRef.current.position.x,
-      rollyDrag.current.targetTile.position.x,
+      rollyDrag.current.targetTile.infos.position.x,
       delta * 10,
     );
 
     rollyRef.current.position.z = MathUtils.lerp(
       rollyRef.current.position.z,
-      rollyDrag.current.targetTile.position.z,
+      rollyDrag.current.targetTile.infos.position.z,
       delta * 10,
     );
 
