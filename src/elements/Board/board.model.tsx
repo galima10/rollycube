@@ -1,10 +1,11 @@
-import type { Vector3Tuple } from "three";
+import { Color, type Vector3Tuple } from "three";
 import { Edges } from "@react-three/drei";
 import type { BoardSizeType } from "./board.types";
 
 const color = "#a5a9ab";
-const tileColor = "#616365";
-const tileSize = 2;
+// const tileColor = "#616365";
+const tileColor = "#fff";
+const tileSize = 1;
 
 export default function BoardModel({
   size,
@@ -60,7 +61,11 @@ function TileModel({
       }}
     >
       <boxGeometry args={[tileSize, 0.05, tileSize]} />
-      <meshStandardMaterial color={tileHovered === tileId ? "red" : color} />
+      <meshStandardMaterial
+        color={color}
+        emissive={tileHovered === tileId ? "#ffffff" : "#000000"}
+        emissiveIntensity={tileHovered === tileId ? 0.15 : 0}
+      />
       <Edges color="white" lineWidth={2} />
     </mesh>
   );
