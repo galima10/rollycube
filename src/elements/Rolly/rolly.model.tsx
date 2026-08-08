@@ -1,15 +1,31 @@
 import { useGLTF } from "@react-three/drei";
 import type { RollyGLTFResult } from "./rolly.types";
-import type { ThreeElements } from "@react-three/fiber";
+import {
+  type ThreeElements,
+  useFrame,
+  type ThreeEvent,
+} from "@react-three/fiber";
 import { getRollyMaterials } from "./rolly.materials";
-import { MeshLambertMaterial } from "three";
-import { useMemo } from "react";
+import { MeshLambertMaterial, type Group } from "three";
+import { useMemo, type RefObject } from "react";
 
 type RollyModelProps = ThreeElements["group"] & {
   paintColor: string;
+  rollyRef: RefObject<Group>;
+  handleRollyPointerDown: (e: ThreeEvent<PointerEvent>) => void;
+  rolly: {
+    dragRolly: (delta: number) => void;
+    snapRolly: (delta: number) => void;
+  };
 };
 
-export function RollyModel({ paintColor, ...props }: RollyModelProps) {
+export function RollyModel({
+  paintColor,
+  rollyRef,
+  rolly,
+  handleRollyPointerDown,
+  ...props
+}: RollyModelProps) {
   const { nodes } = useGLTF(
     `${import.meta.env.BASE_URL}models/rolly.glb`,
   ) as RollyGLTFResult;
@@ -21,8 +37,17 @@ export function RollyModel({ paintColor, ...props }: RollyModelProps) {
       }),
     [paintColor],
   );
+  useFrame((_, delta) => {
+    rolly.dragRolly(delta);
+    rolly.snapRolly(delta);
+  });
   return (
-    <group {...props} dispose={null}>
+    <group
+      {...props}
+      dispose={null}
+      ref={rollyRef}
+      onPointerDown={handleRollyPointerDown}
+    >
       <mesh
         geometry={nodes.Body.geometry}
         material={paintMaterial}

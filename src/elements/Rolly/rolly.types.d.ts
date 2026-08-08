@@ -10,3 +10,14 @@ export type RollyGLTFResult = GLTF & {
   };
   animations: GLTFAction[];
 };
+
+export interface RollyType {
+  color: string;
+  position: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  isDragging: boolean;
+  isFalling: boolean;
+}

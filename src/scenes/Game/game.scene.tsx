@@ -2,15 +2,25 @@ import { Canvas } from "@react-three/fiber";
 import { RollyModel } from "@/elements/Rolly/rolly.model";
 import BoardModel from "@/elements/Board/board.model";
 import { MOUSE } from "three";
-
 import { OrbitControls, Environment } from "@react-three/drei";
-import { useState } from "react";
+import { useGame } from "./game.hook";
+
 export default function GameScene() {
-  const [color, setColor] = useState("#ffe920");
-  const [tileHovered, setTileHovered] = useState<null | number>(null);
-  function hoverTile(tileId: number | null) {
-    setTileHovered(tileId);
-  }
+  const {
+    tileHovered,
+    hoverTile,
+    handleRollyPointerDown,
+    // dragRolly,
+    handleRollyPointerUp,
+    tileRefs,
+    gameInfos,
+    resetGame,
+    rollyRef,
+    // snapRolly
+    animations
+  } = useGame();
+  const { rolly } = animations;
+
   return (
     <Canvas
       camera={{
@@ -19,6 +29,7 @@ export default function GameScene() {
         near: 0.1,
         far: 100,
       }}
+      onPointerUp={handleRollyPointerUp}
     >
       <OrbitControls
         enablePan={false}
@@ -31,10 +42,18 @@ export default function GameScene() {
       <Environment preset="warehouse" />
       <RollyModel
         scale={[0.5, 0.5, 0.5]}
-        paintColor={color}
-        position={[0, 2, 0]}
+        paintColor={gameInfos.rolly.color}
+        position={[0, 0.6, 0]}
+        rollyRef={rollyRef}
+        rolly={rolly}
+        handleRollyPointerDown={handleRollyPointerDown}
       />
-      <BoardModel size={16} hoverTile={hoverTile} tileHovered={tileHovered} />
+      <BoardModel
+        hoverTile={hoverTile}
+        tileHovered={tileHovered}
+        tileRefs={tileRefs}
+        board={gameInfos.board}
+      />
     </Canvas>
   );
 }

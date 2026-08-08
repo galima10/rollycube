@@ -6,3 +6,8 @@ export type BucketGLTFResult = GLTF & {
   };
   animations: GLTFAction[];
 };
+
+export interface BucketType {
+  position: 1 | 2 | 3 | 4;
+  color: string;
+}
