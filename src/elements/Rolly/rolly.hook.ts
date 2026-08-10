@@ -6,13 +6,12 @@ import {
   type Vector3Tuple,
   MathUtils,
   Vector3,
-  type Mesh,
 } from "three";
 import type { TileInfosType } from "../Board/board.types";
 
 interface RollyDragState {
   targetTile: {
-    tileId: number | null;
+    id: number | null;
     infos: TileInfosType | null;
   };
   targetPosition: Vector3Tuple | null;
@@ -30,7 +29,7 @@ export function useRolly(
 
   const rollyDrag = useRef<RollyDragState>({
     targetTile: {
-      tileId: null,
+      id: null,
       infos: null,
     },
     targetPosition: null,
@@ -39,8 +38,8 @@ export function useRolly(
   function syncRollyWorldToRollyBoard() {
     if (!rollyBoardRef.current || !rollyWorldRef.current) return;
     if (
-      gameInfos.rolly.actualPlace.type === "start" &&
-      rollyBoardRef.current.position.y === 0.6
+      (gameInfos.rolly.actualPlace.type === "start" &&
+      rollyBoardRef.current.position.y === 0.6) || (gameInfos.rolly.actualPlace.type === "bucket" && rollyBoardRef.current.position.y === 1)
     ) {
       isRollyWorld.current = true;
       return;
@@ -74,7 +73,7 @@ export function useRolly(
   }
 
   function pointerUp(
-    type: "start" | "insideBoard" | "outsideBoard",
+    type: "outside" | null,
     position: { x: number; y: number; z: number } | null,
   ) {
     if (position) {
@@ -82,7 +81,7 @@ export function useRolly(
     }
 
     setGameInfos((prev) => {
-      if (type === "outsideBoard") {
+      if (type === "outside") {
         return {
           ...prev,
           rolly: {
@@ -119,7 +118,7 @@ export function useRolly(
       const lastTileId = gameInfos.board.tiles.lastValidTileId;
 
       if (lastTileId === null) {
-        pointerUp("outsideBoard", {
+        pointerUp(null, {
           x: gameInfos.rolly.position.x,
           y: gameInfos.rolly.position.y,
           z: gameInfos.rolly.position.z,
@@ -129,17 +128,22 @@ export function useRolly(
 
       const tile = gameInfos.board.tiles.grid[lastTileId];
 
-      pointerUp("insideBoard", {
+      pointerUp(null, {
         x: tile.position.x,
         y: 0.6,
         z: tile.position.z,
       });
     } else if (gameInfos.placeHovered.type === "start") {
-      console.log("test");
-      pointerUp("start", {
+      pointerUp(null, {
         x: gameInfos.start.positionX,
         y: 0.6,
         z: 0,
+      });
+    } else if (gameInfos.placeHovered.type === "bucket") {
+      pointerUp(null, {
+        x: gameInfos.buckets.positionX,
+        y: 1,
+        z: gameInfos.buckets.colors[rollyDrag.current.targetTile.id].positionZ,
       });
     }
   }
@@ -191,8 +195,8 @@ export function useRolly(
               ...prev.board.tiles,
               grid: {
                 ...prev.board.tiles.grid,
-                [rollyDrag.current.targetTile.tileId]: {
-                  ...prev.board.tiles.grid[rollyDrag.current.targetTile.tileId],
+                [rollyDrag.current.targetTile.id]: {
+                  ...prev.board.tiles.grid[rollyDrag.current.targetTile.id],
                   color: gameInfos.rolly.color,
                 },
               },
@@ -203,7 +207,7 @@ export function useRolly(
             isFalling: false,
             actualPlace: {
               type: "board",
-              id: rollyDrag.current.targetTile.tileId,
+              id: rollyDrag.current.targetTile.id,
             },
           },
         };
@@ -217,6 +221,19 @@ export function useRolly(
               type: "start",
               id: null,
             },
+          },
+        };
+      } else if (gameInfos.placeHovered.type === "bucket") {
+        return {
+          ...prev,
+          rolly: {
+            ...prev.rolly,
+            isFalling: false,
+            actualPlace: {
+              type: "bucket",
+              id: rollyDrag.current.targetTile.id,
+            },
+            color: gameInfos.buckets.colors[rollyDrag.current.targetTile.id].color
           },
         };
       }
@@ -233,7 +250,7 @@ export function useRolly(
         if (tileId === null) return;
 
         rollyDrag.current.targetTile = {
-          tileId: tileId,
+          id: tileId,
           infos: gameInfos.board.tiles.grid[tileId],
         };
 
@@ -247,7 +264,7 @@ export function useRolly(
 
       case "start":
         rollyDrag.current.targetTile = {
-          tileId: null,
+          id: null,
           infos: {
             position: {
               x: gameInfos.start.positionX,
@@ -265,6 +282,21 @@ export function useRolly(
         break;
 
       case "bucket":
+        rollyDrag.current.targetTile = {
+          id: gameInfos.placeHovered.id,
+          infos: {
+            position: {
+              x: gameInfos.buckets.positionX,
+              z: gameInfos.buckets.colors[gameInfos.placeHovered.id].positionZ,
+            },
+          },
+        };
+
+        moveRolly(delta, {
+          x: rollyDrag.current.targetTile.infos.position.x,
+          y: 3,
+          z: rollyDrag.current.targetTile.infos.position.z,
+        });
         break;
     }
   }

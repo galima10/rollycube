@@ -27,7 +27,7 @@ export default function StartModel({
       <boxGeometry args={[tileSize * 1.25, 0.2, tileSize * 1.25]} />
       <meshStandardMaterial
         color={"#37393a"}
-        emissive={gameInfos.placeHovered.type === "start" ? "#ffffff" : "#000000"}
+        emissive={gameInfos.grabbing === "rolly" && gameInfos.placeHovered.type === "start" ? "#ffffff" : "#000000"}
         emissiveIntensity={gameInfos.placeHovered.type === "start" ? 0.15 : 0}
       />
     </mesh>

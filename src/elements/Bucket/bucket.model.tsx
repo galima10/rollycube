@@ -1,16 +1,18 @@
 import { useGLTF } from "@react-three/drei";
-import { ThreeElements } from "@react-three/fiber";
+import { type ThreeElements, type ThreeEvent } from "@react-three/fiber";
 import { BucketGLTFResult } from "./bucket.types";
 import { getBucketMaterials } from "./bucket.materials";
 import { useMemo } from "react";
 import { MeshLambertMaterial } from "three";
 import type { GameInfos } from "@/scenes/Game/game.types";
+import type { BucketType } from "./bucket.types";
 
 type BucketModelProps = ThreeElements["group"] & {
   paintColor: string;
+  isHovered: boolean;
 };
 
-function BucketModel({ paintColor, ...props }: BucketModelProps) {
+function BucketModel({ paintColor, isHovered, ...props }: BucketModelProps) {
   const { nodes } = useGLTF(
     `${import.meta.env.BASE_URL}models/bucket.glb`,
   ) as BucketGLTFResult;
@@ -19,8 +21,10 @@ function BucketModel({ paintColor, ...props }: BucketModelProps) {
     () =>
       new MeshLambertMaterial({
         color: paintColor,
+        emissive: isHovered ? "#ffffff" : "#000000",
+        emissiveIntensity: isHovered ? 0.15 : 0,
       }),
-    [paintColor],
+    [paintColor, isHovered],
   );
   return (
     <group {...props} dispose={null}>
@@ -36,32 +40,41 @@ function BucketModel({ paintColor, ...props }: BucketModelProps) {
 useGLTF.preload("/bucket.glb");
 
 type BucketsModelProps = ThreeElements["group"] & {
-  gameInofs: GameInfos;
+  gameInfos: GameInfos;
+  buckets: {
+    handlePointerEnter: (e: ThreeEvent<PointerEvent>, bucketId: number) => void;
+  };
 };
 
-export default function BucketsModel({ gameInofs, ...props }: BucketsModelProps) {
+export default function BucketsModel({
+  gameInfos,
+  buckets,
+  ...props
+}: BucketsModelProps) {
   return (
     <group
       {...props}
       dispose={null}
-      position={[gameInofs.buckets.positionX, 0, 0]}
+      position={[gameInfos.buckets.positionX, 0, 0]}
     >
-      <BucketModel
-        paintColor={gameInofs.buckets.bucket1.color}
-        position={[0, 0, gameInofs.buckets.bucket1.position.z]}
-      />
-      <BucketModel
-        paintColor={gameInofs.buckets.bucket2.color}
-        position={[0, 0, gameInofs.buckets.bucket2.position.z]}
-      />
-      <BucketModel
-        paintColor={gameInofs.buckets.bucket3.color}
-        position={[0, 0, gameInofs.buckets.bucket3.position.z]}
-      />
-      <BucketModel
-        paintColor={gameInofs.buckets.bucket4.color}
-        position={[0, 0, gameInofs.buckets.bucket4.position.z]}
-      />
+      {(Object.entries(gameInfos.buckets.colors) as [string, BucketType][]).map(
+        ([bucketId, bucket]) => {
+          return (
+            <BucketModel
+              paintColor={bucket.color}
+              position={[0, 0, bucket.positionZ]}
+              onPointerEnter={(e) =>
+                buckets.handlePointerEnter(e, Number(bucketId))
+              }
+              isHovered={
+                gameInfos.grabbing === "rolly" &&
+                gameInfos.placeHovered.type === "bucket" &&
+                gameInfos.placeHovered.id === Number(bucketId)
+              }
+            />
+          );
+        },
+      )}
     </group>
   );
 }

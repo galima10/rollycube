@@ -7,7 +7,7 @@ export function useGame() {
     state: "playing",
     board: createBoard(12),
     rolly: {
-      color: "#ffe920",
+      color: "yellow",
       position: {
         x: 0,
         y: 0,
@@ -22,33 +22,27 @@ export function useGame() {
     },
     buckets: {
       positionX: 12 / 2 + 4,
-      bucket1: {
-        position: {
-          id: 1,
-          z: -4.5,
+      colors: {
+        1: {
+          bucketId: 1,
+          positionZ: -4.5,
+          color: "red",
         },
-        color: "red",
-      },
-      bucket2: {
-        position: {
-          id: 2,
-          z: -1.5,
+        2: {
+          bucketId: 2,
+          positionZ: -1.5,
+          color: "blue",
         },
-        color: "blue",
-      },
-      bucket3: {
-        position: {
-          id: 3,
-          z: 1.5,
+        3: {
+          bucketId: 3,
+          positionZ: 1.5,
+          color: "green",
         },
-        color: "green",
-      },
-      bucket4: {
-        position: {
-          id: 4,
-          z: 4.5,
+        4: {
+          bucketId: 4,
+          positionZ: 4.5,
+          color: "yellow",
         },
-        color: "yellow",
       },
     },
     grabbing: null,
@@ -88,33 +82,27 @@ export function useGame() {
       },
       buckets: {
         positionX: 12 / 2 + 4,
-        bucket1: {
-          position: {
-            id: 1,
-            z: -6,
+        colors: {
+          1: {
+            bucketId: 1,
+            positionZ: -4.5,
+            color: "red",
           },
-          color: "red",
-        },
-        bucket2: {
-          position: {
-            id: 2,
-            z: -2,
+          2: {
+            bucketId: 2,
+            positionZ: -1.5,
+            color: "blue",
           },
-          color: "blue",
-        },
-        bucket3: {
-          position: {
-            id: 3,
-            z: 2,
+          3: {
+            bucketId: 3,
+            positionZ: 1.5,
+            color: "green",
           },
-          color: "green",
-        },
-        bucket4: {
-          position: {
-            id: 4,
-            z: 6,
+          4: {
+            bucketId: 4,
+            positionZ: 4.5,
+            color: "yellow",
           },
-          color: "yellow",
         },
       },
       grabbing: null,

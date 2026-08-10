@@ -9,6 +9,7 @@ import { useGame } from "./game.hook";
 import { useBoard } from "@/elements/Board/board.hook";
 import { useRolly } from "@/elements/Rolly/rolly.hook";
 import { useStart } from "@/elements/Start/start.hook";
+import { useBucket } from "@/elements/Bucket/bucket.hook";
 
 export default function GameScene() {
   const { setGameInfos, gameInfos, resetGame } = useGame();
@@ -23,6 +24,7 @@ export default function GameScene() {
   );
 
   const { start } = useStart(gameInfos, setGameInfos);
+  const { buckets } = useBucket(gameInfos, setGameInfos);
 
   return (
     <Canvas
@@ -63,13 +65,12 @@ export default function GameScene() {
         />
         <BoardModel
           hoverTile={hoverTile}
-          placeHovered={gameInfos.placeHovered.id}
           tileRefs={tileRefs}
           board={{
-            infos: gameInfos.board,
             interactions: board.interactions,
             animations: board.animations,
           }}
+          gameInfos={gameInfos}
         />
       </group>
       <RollyModel
@@ -87,7 +88,7 @@ export default function GameScene() {
         visible={isRollyWorld.current}
       />
       <StartModel position={[0, 4, 0]} gameInfos={gameInfos} start={start} />
-      <BucketsModel gameInofs={gameInfos} />
+      <BucketsModel gameInfos={gameInfos} buckets={buckets} />
     </Canvas>
   );
 }

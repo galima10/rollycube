@@ -1,20 +1,19 @@
 import { Color, type Vector3Tuple, type Mesh, type Group } from "three";
 import { Edges } from "@react-three/drei";
-import type { BoardSizeType, BoardType, TileInfosType } from "./board.types";
+import type { BoardType, TileInfosType } from "./board.types";
 import { type RefObject } from "react";
 import { type ThreeEvent, useFrame } from "@react-three/fiber";
+import type { GameInfos } from "@/scenes/Game/game.types";
 
 export default function BoardModel({
   hoverTile,
-  placeHovered,
   tileRefs,
   board,
+  gameInfos,
 }: {
   hoverTile: (tileId: number | null) => void;
-  placeHovered: null | number;
   tileRefs: RefObject<Map<number, Mesh>>;
   board: {
-    infos: BoardType;
     interactions: {
       handlePointerDown: (
         e: ThreeEvent<PointerEvent>,
@@ -28,8 +27,9 @@ export default function BoardModel({
       returnBoard: (delta: number) => void;
     };
   };
+  gameInfos: GameInfos;
 }) {
-  const size = Math.sqrt(Object.keys(board.infos.tiles.grid).length);
+  const size = Math.sqrt(Object.keys(gameInfos.board.tiles.grid).length);
   const boardColor = "#a5a9ab";
   useFrame((_, delta) => {
     board.animations.leanBoard(delta);
@@ -39,9 +39,9 @@ export default function BoardModel({
     <group dispose={null} rotation={[0, 0, 0]}>
       <Tiles
         hoverTile={hoverTile}
-        placeHovered={placeHovered}
+        placeHovered={gameInfos.placeHovered.type === "board" && gameInfos.placeHovered.id}
         tileRefs={tileRefs}
-        board={board.infos}
+        board={gameInfos.board}
       />
       <Border
         size={size}
