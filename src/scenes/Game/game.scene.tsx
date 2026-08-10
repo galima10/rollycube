@@ -1,7 +1,8 @@
 import { Canvas } from "@react-three/fiber";
-import { RollyModel } from "@/elements/Rolly/rolly.model";
+import RollyModel from "@/elements/Rolly/rolly.model";
 import BoardModel from "@/elements/Board/board.model";
 import StartModel from "@/elements/Start/start.model";
+import BucketsModel from "@/elements/Bucket/bucket.model";
 import { MOUSE } from "three";
 import { OrbitControls, Environment } from "@react-three/drei";
 import { useGame } from "./game.hook";
@@ -86,6 +87,7 @@ export default function GameScene() {
         visible={isRollyWorld.current}
       />
       <StartModel position={[0, 4, 0]} gameInfos={gameInfos} start={start} />
+      <BucketsModel gameInofs={gameInfos} />
     </Canvas>
   );
 }

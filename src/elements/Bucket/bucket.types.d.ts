@@ -7,7 +7,18 @@ export type BucketGLTFResult = GLTF & {
   animations: GLTFAction[];
 };
 
-export interface BucketType {
-  position: 1 | 2 | 3 | 4;
+interface BucketType {
+  position: {
+    id: 1 | 2 | 3 | 4;
+    z: number;
+  };
   color: string;
+}
+
+export interface BucketsType {
+  positionX: number;
+  bucket1: BucketType;
+  bucket2: BucketType;
+  bucket3: BucketType;
+  bucket4: BucketType;
 }

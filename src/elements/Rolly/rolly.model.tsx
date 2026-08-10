@@ -26,7 +26,7 @@ type RollyModelProps = ThreeElements["group"] & {
   };
 };
 
-export function RollyModel({
+export default function RollyModel({
   paintColor,
   rollyRef,
   rolly,

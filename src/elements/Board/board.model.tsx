@@ -4,8 +4,6 @@ import type { BoardSizeType, BoardType, TileInfosType } from "./board.types";
 import { type RefObject } from "react";
 import { type ThreeEvent, useFrame } from "@react-three/fiber";
 
-const tileSize = 1;
-
 export default function BoardModel({
   hoverTile,
   placeHovered,
@@ -40,19 +38,18 @@ export default function BoardModel({
   return (
     <group dispose={null} rotation={[0, 0, 0]}>
       <Tiles
-        tileSize={tileSize}
         hoverTile={hoverTile}
         placeHovered={placeHovered}
         tileRefs={tileRefs}
         board={board.infos}
       />
       <Border
-        size={size * tileSize}
+        size={size}
         color={boardColor}
         interactions={board.interactions}
       />
       <mesh position={[0, -0.5, 0]}>
-        <boxGeometry args={[size * tileSize, 1, size * tileSize]} />
+        <boxGeometry args={[size, 1, size]} />
         <meshStandardMaterial color={boardColor} />
       </mesh>
     </group>
@@ -61,7 +58,6 @@ export default function BoardModel({
 
 function TileModel({
   position,
-  tileSize,
   hoverTile,
   placeHovered,
   tileId,
@@ -69,7 +65,6 @@ function TileModel({
   tile,
 }: {
   position: Vector3Tuple;
-  tileSize: number;
   hoverTile: (tileId: number | null) => void;
   placeHovered: null | number;
   tileId: number;
@@ -92,7 +87,7 @@ function TileModel({
         else tileRefs.current.delete(tileId);
       }}
     >
-      <boxGeometry args={[tileSize, 0.05, tileSize]} />
+      <boxGeometry args={[1, 0.05, 1]} />
       <meshStandardMaterial
         color={tile.color}
         emissive={placeHovered === tileId ? "#ffffff" : "#000000"}
@@ -104,13 +99,11 @@ function TileModel({
 }
 
 function Tiles({
-  tileSize,
   hoverTile,
   placeHovered,
   tileRefs,
   board,
 }: {
-  tileSize: number;
   hoverTile: (tileId: number | null) => void;
   placeHovered: null | number;
   tileRefs: RefObject<Map<number, Mesh>>;
@@ -129,7 +122,6 @@ function Tiles({
             hoverTile={hoverTile}
             placeHovered={placeHovered}
             tileRefs={tileRefs}
-            tileSize={tileSize}
             tile={tile}
           />
         );
@@ -151,7 +143,7 @@ function Border({
     handlePointerLeave: (e: ThreeEvent<PointerEvent>) => void;
   };
 }) {
-  const thickness = tileSize / 3;
+  const thickness = 1 / 3;
   const height = 1.16;
 
   return (

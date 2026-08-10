@@ -21,21 +21,34 @@ export function useGame() {
       },
     },
     buckets: {
+      positionX: 12 / 2 + 4,
       bucket1: {
-        position: 1,
+        position: {
+          id: 1,
+          z: -4.5,
+        },
         color: "red",
       },
       bucket2: {
-        position: 2,
+        position: {
+          id: 2,
+          z: -1.5,
+        },
         color: "blue",
       },
       bucket3: {
-        position: 3,
-        color: "yellow",
+        position: {
+          id: 3,
+          z: 1.5,
+        },
+        color: "green",
       },
       bucket4: {
-        position: 4,
-        color: "green",
+        position: {
+          id: 4,
+          z: 4.5,
+        },
+        color: "yellow",
       },
     },
     grabbing: null,
@@ -74,21 +87,34 @@ export function useGame() {
         },
       },
       buckets: {
+        positionX: 12 / 2 + 4,
         bucket1: {
-          position: 1,
+          position: {
+            id: 1,
+            z: -6,
+          },
           color: "red",
         },
         bucket2: {
-          position: 2,
+          position: {
+            id: 2,
+            z: -2,
+          },
           color: "blue",
         },
         bucket3: {
-          position: 3,
-          color: "yellow",
+          position: {
+            id: 3,
+            z: 2,
+          },
+          color: "green",
         },
         bucket4: {
-          position: 4,
-          color: "green",
+          position: {
+            id: 4,
+            z: 6,
+          },
+          color: "yellow",
         },
       },
       grabbing: null,

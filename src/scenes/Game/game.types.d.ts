@@ -1,6 +1,6 @@
 import type { BoardType } from "@/elements/Board/board.types";
 import type { RollyType } from "@/elements/Rolly/rolly.types";
-import type { BucketType } from "@/elements/Bucket/bucket.types";
+import type { BucketsType } from "@/elements/Bucket/bucket.types";
 import type { StartType } from "@/elements/Start/start.types";
 
 export type GameStateType =
@@ -32,12 +32,7 @@ export interface GameInfos {
   board: BoardType;
   placeHovered: PlaceType;
   rolly: RollyType;
-  buckets: {
-    bucket1: BucketType;
-    bucket2: BucketType;
-    bucket3: BucketType;
-    bucket4: BucketType;
-  };
+  buckets: BucketsType;
   grabbing: "rolly" | "board" | null;
   start: StartType;
 }
