@@ -16,7 +16,8 @@ type RollyModelProps = ThreeElements["group"] & {
     animations: {
       dragRolly?: (delta: number) => void;
       snapRolly?: (delta: number) => void;
-      syncRollyWorldToRollyBoard?: () => void
+      syncRollyWorldToRollyBoard?: () => void;
+      rollRolly?: (delta: number) => void;
     };
     interactions: {
       handlePointerDown?: (e: ThreeEvent<PointerEvent>) => void;
@@ -46,37 +47,46 @@ export default function RollyModel({
   useFrame((_, delta) => {
     rolly.animations.dragRolly?.(delta);
     rolly.animations.snapRolly?.(delta);
+    rolly.animations.rollRolly?.(delta);
     rolly.animations.syncRollyWorldToRollyBoard?.();
   });
   return (
-    <group
-      {...props}
-      dispose={null}
-      ref={rollyRef}
-      onPointerDown={rolly.interactions.handlePointerDown}
-      onPointerEnter={rolly.interactions.handlePointerEnter}
-      onPointerLeave={rolly.interactions.handlePointerLeave}
-    >
-      <mesh
-        geometry={nodes.Body.geometry}
-        material={paintMaterial}
-        rotation={[Math.PI, 0, Math.PI]}
-      />
+    <group>
       <group
-        position={[0.706, 0, 1]}
-        rotation={[Math.PI, 0, Math.PI]}
-        scale={[0.429, 0.429, 0.078]}
+        {...props}
+        dispose={null}
+        ref={rollyRef}
+        onPointerDown={rolly.interactions.handlePointerDown}
+        onPointerEnter={rolly.interactions.handlePointerEnter}
+        onPointerLeave={rolly.interactions.handlePointerLeave}
       >
-        <mesh geometry={nodes.Cube004.geometry} material={materials.eye} />
-        <mesh geometry={nodes.Cube004_1.geometry} material={materials.pupil} />
-      </group>
-      <group
-        position={[-0.706, 0, 1]}
-        rotation={[Math.PI, 0, Math.PI]}
-        scale={[0.429, 0.429, 0.078]}
-      >
-        <mesh geometry={nodes.Cube012.geometry} material={materials.eye} />
-        <mesh geometry={nodes.Cube012_1.geometry} material={materials.pupil} />
+        <mesh
+          geometry={nodes.Body.geometry}
+          material={paintMaterial}
+          rotation={[Math.PI, 0, Math.PI]}
+        />
+        <group
+          position={[0.706, 0, 1]}
+          rotation={[Math.PI, 0, Math.PI]}
+          scale={[0.429, 0.429, 0.078]}
+        >
+          <mesh geometry={nodes.Cube004.geometry} material={materials.eye} />
+          <mesh
+            geometry={nodes.Cube004_1.geometry}
+            material={materials.pupil}
+          />
+        </group>
+        <group
+          position={[-0.706, 0, 1]}
+          rotation={[Math.PI, 0, Math.PI]}
+          scale={[0.429, 0.429, 0.078]}
+        >
+          <mesh geometry={nodes.Cube012.geometry} material={materials.eye} />
+          <mesh
+            geometry={nodes.Cube012_1.geometry}
+            material={materials.pupil}
+          />
+        </group>
       </group>
     </group>
   );

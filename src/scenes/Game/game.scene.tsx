@@ -10,21 +10,35 @@ import { useBoard } from "@/elements/Board/board.hook";
 import { useRolly } from "@/elements/Rolly/rolly.hook";
 import { useStart } from "@/elements/Start/start.hook";
 import { useBucket } from "@/elements/Bucket/bucket.hook";
+import { useRoll } from "@/elements/Rolly/roll.hook";
 
 export default function GameScene() {
-  const { setGameInfos, gameInfos, resetGame } = useGame();
+  // const { setGameInfos, gameInfos, resetGame, gameRefs } = useGame();
+  
+
+  // const { boardRef, board, tileRefs, hoverTile } = useBoard(
+  //   gameInfos,
+  //   setGameInfos,
+  //   gameRefs
+  // );
+  // const { rolly } = useRolly(gameInfos, setGameInfos, gameRefs);
+
+  // const { start } = useStart(gameInfos, setGameInfos);
+  // const { buckets } = useBucket(gameInfos, setGameInfos);
+
+  // const { rollRolly } = useRoll(gameInfos, setGameInfos, gameRefs);
+
+  const { gameInfos } = useGame();
 
   const { boardRef, board, tileRefs, hoverTile } = useBoard(
-    gameInfos,
-    setGameInfos,
+    gameInfos
   );
-  const { rollyBoardRef, rollyWorldRef, rolly, isRollyWorld } = useRolly(
-    gameInfos,
-    setGameInfos,
-  );
+  const { rolly } = useRolly(gameInfos);
 
-  const { start } = useStart(gameInfos, setGameInfos);
-  const { buckets } = useBucket(gameInfos, setGameInfos);
+  const { start } = useStart(gameInfos);
+  const { buckets } = useBucket(gameInfos);
+
+  const { rollRolly } = useRoll(gameInfos);
 
   return (
     <Canvas
@@ -56,12 +70,18 @@ export default function GameScene() {
           scale={[0.5, 0.5, 0.5]}
           paintColor={gameInfos.rolly.color}
           position={[gameInfos.start.positionX, 0.6, 0]}
-          rollyRef={rollyBoardRef}
+          rollyRef={rolly.refs.rollyBoardRef}
           rolly={{
-            animations: rolly.animations,
+            animations: {
+              rollRolly: rollRolly,
+              snapRolly: rolly.animations.snapRolly,
+              dragRolly: rolly.animations.dragRolly,
+              syncRollyWorldToRollyBoard:
+                rolly.animations.syncRollyWorldToRollyBoard,
+            },
             interactions: rolly.interactions,
           }}
-          visible={!isRollyWorld.current}
+          visible={!rolly.refs.isRollyWorld.current}
         />
         <BoardModel
           hoverTile={hoverTile}
@@ -77,7 +97,7 @@ export default function GameScene() {
         scale={[0.5, 0.5, 0.5]}
         paintColor={gameInfos.rolly.color}
         position={[gameInfos.start.positionX, 0.6, 0]}
-        rollyRef={rollyWorldRef}
+        rollyRef={rolly.refs.rollyWorldRef}
         rolly={{
           animations: {
             syncRollyWorldToRollyBoard:
@@ -85,7 +105,7 @@ export default function GameScene() {
           },
           interactions: {},
         }}
-        visible={isRollyWorld.current}
+        visible={rolly.refs.isRollyWorld.current}
       />
       <StartModel position={[0, 4, 0]} gameInfos={gameInfos} start={start} />
       <BucketsModel gameInfos={gameInfos} buckets={buckets} />

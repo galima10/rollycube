@@ -1,12 +1,12 @@
-import type { GameInfos } from "@/scenes/Game/game.types";
-import { type Dispatch, type SetStateAction, useRef, useEffect } from "react";
-import type { ThreeEvent } from "@react-three/fiber";
+import type { GameInfos, GameRefs } from "@/scenes/Game/game.types";
 import {
-  type Group,
-  type Vector3Tuple,
-  MathUtils,
-  Vector3,
-} from "three";
+  type Dispatch,
+  type SetStateAction,
+  useRef,
+  type RefObject,
+} from "react";
+import type { ThreeEvent } from "@react-three/fiber";
+import { type Group, type Vector3Tuple, MathUtils, Vector3 } from "three";
 import type { TileInfosType } from "../Board/board.types";
 
 interface RollyDragState {
@@ -20,9 +20,12 @@ interface RollyDragState {
 export function useRolly(
   gameInfos: GameInfos,
   setGameInfos: Dispatch<SetStateAction<GameInfos>>,
+  gameRefs: RefObject<GameRefs>,
 ) {
   const rollyBoardRef = useRef<Group>(null);
   const rollyWorldRef = useRef<Group>(null);
+
+  const rollyPivotRef = useRef<Group>(null);
 
   const worldPosition = new Vector3();
   const isRollyWorld = useRef(true);
@@ -39,7 +42,9 @@ export function useRolly(
     if (!rollyBoardRef.current || !rollyWorldRef.current) return;
     if (
       (gameInfos.rolly.actualPlace.type === "start" &&
-      rollyBoardRef.current.position.y === 0.6) || (gameInfos.rolly.actualPlace.type === "bucket" && rollyBoardRef.current.position.y === 1)
+        rollyBoardRef.current.position.y === 0.6) ||
+      (gameInfos.rolly.actualPlace.type === "bucket" &&
+        rollyBoardRef.current.position.y === 1)
     ) {
       isRollyWorld.current = true;
       return;
@@ -54,6 +59,7 @@ export function useRolly(
   function handlePointerDown(e: ThreeEvent<PointerEvent>) {
     if (e.button !== 0) return;
     if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) return;
+    if (gameRefs.current.board.isLeaning) return;
     e.stopPropagation();
     document.body.style.cursor = "grabbing";
 
@@ -233,7 +239,8 @@ export function useRolly(
               type: "bucket",
               id: rollyDrag.current.targetTile.id,
             },
-            color: gameInfos.buckets.colors[rollyDrag.current.targetTile.id].color
+            color:
+              gameInfos.buckets.colors[rollyDrag.current.targetTile.id].color,
           },
         };
       }
@@ -325,10 +332,13 @@ export function useRolly(
   }
 
   return {
-    rollyBoardRef,
-    rollyWorldRef,
-    isRollyWorld,
     rolly: {
+      refs: {
+        rollyBoardRef,
+        rollyWorldRef,
+        isRollyWorld,
+        rollyPivotRef,
+      },
       animations: {
         dragRolly,
         snapRolly,

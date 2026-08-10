@@ -58,9 +58,10 @@ export default function BucketsModel({
       position={[gameInfos.buckets.positionX, 0, 0]}
     >
       {(Object.entries(gameInfos.buckets.colors) as [string, BucketType][]).map(
-        ([bucketId, bucket]) => {
+        ([bucketId, bucket], index) => {
           return (
             <BucketModel
+              key={index}
               paintColor={bucket.color}
               position={[0, 0, bucket.positionZ]}
               onPointerEnter={(e) =>

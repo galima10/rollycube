@@ -3,7 +3,7 @@ import type { BoardSizeType, BoardType } from "./board.types";
 export function createBoard(boardSize: BoardSizeType): BoardType {
   const tiles: BoardType["tiles"] = {
     lastValidTileId: null,
-    grid: {}
+    grid: {},
   };
 
   for (let i = 0; i < boardSize * boardSize; i++) {
@@ -29,5 +29,11 @@ export function createBoard(boardSize: BoardSizeType): BoardType {
     boardSize,
     tiles,
     borders,
+    isLeaning: false,
+    rotation: {
+      x: 0,
+      z: 0,
+    },
+    leanAxis: null,
   };
 }

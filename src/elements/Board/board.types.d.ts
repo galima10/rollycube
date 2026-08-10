@@ -21,4 +21,10 @@ export interface BoardType {
       isGrabbing: boolean;
     };
   };
+  isLeaning: boolean;
+  leanAxis: AxisType;
+  rotation: {
+    x: number;
+    z: number;
+  };
 }

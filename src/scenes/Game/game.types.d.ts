@@ -36,3 +36,23 @@ export interface GameInfos {
   grabbing: "rolly" | "board" | null;
   start: StartType;
 }
+
+type AxisType = "x" | "z" | null;
+
+export interface GameRefs {
+  board: {
+    isLeaning: boolean;
+    leanAxis: AxisType;
+    rotation: {
+      x: number;
+      z: number;
+    };
+  };
+  rolly: {
+    position: {
+      x: number;
+      y: number;
+      z: number;
+    };
+  };
+}

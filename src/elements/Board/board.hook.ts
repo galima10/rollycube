@@ -1,5 +1,11 @@
-import type { GameInfos } from "@/scenes/Game/game.types";
-import { type SetStateAction, type Dispatch, useRef, useState } from "react";
+import type { GameInfos, GameRefs } from "@/scenes/Game/game.types";
+import {
+  type SetStateAction,
+  type Dispatch,
+  useRef,
+  type RefObject,
+  Ref,
+} from "react";
 import { type Group, MathUtils, type Mesh } from "three";
 import type { ThreeEvent } from "@react-three/fiber";
 
@@ -16,6 +22,7 @@ interface BoardDragState {
 export function useBoard(
   gameInfos: GameInfos,
   setGameInfos: Dispatch<SetStateAction<GameInfos>>,
+  gameRefs: RefObject<GameRefs>,
 ) {
   const boardRef = useRef<Group>(null);
   const tileRefs = useRef<Map<number, Mesh>>(new Map());
@@ -67,6 +74,7 @@ export function useBoard(
     if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) {
       return;
     }
+    if (gameRefs.current.board.isLeaning) return;
     document.body.style.cursor = "grabbing";
 
     e.stopPropagation();
@@ -136,6 +144,7 @@ export function useBoard(
 
   function returnBoard(delta: number) {
     if (gameInfos.grabbing !== null) return;
+    if (!gameRefs.current.board.isLeaning) return;
 
     const speed = 5;
 
@@ -160,7 +169,13 @@ export function useBoard(
     ) {
       boardRef.current.rotation.x = 0;
       boardRef.current.rotation.z = 0;
+      gameRefs.current.board.isLeaning = false;
+      gameRefs.current.board.leanAxis = null;
     }
+    gameRefs.current.board.rotation = {
+      x: boardRef.current.rotation.x,
+      z: boardRef.current.rotation.z,
+    };
   }
 
   function leanBoard(delta: number) {
@@ -204,6 +219,7 @@ export function useBoard(
         -maxAngle,
         maxAngle,
       );
+      gameRefs.current.board.leanAxis = "x";
     } else {
       boardRef.current.rotation.z = MathUtils.damp(
         boardRef.current.rotation.z,
@@ -217,7 +233,17 @@ export function useBoard(
         -maxAngle,
         maxAngle,
       );
+      gameRefs.current.board.leanAxis = "z";
     }
+
+    gameRefs.current.board = {
+      ...gameRefs.current.board,
+      isLeaning: true,
+      rotation: {
+        x: boardRef.current.rotation.x,
+        z: boardRef.current.rotation.z,
+      },
+    };
   }
 
   return {
