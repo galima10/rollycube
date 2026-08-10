@@ -1,5 +1,5 @@
 import type { GameInfos } from "@/scenes/Game/game.types";
-import { type Dispatch, type SetStateAction, useRef } from "react";
+import { type Dispatch, type SetStateAction, useRef, useEffect } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import {
   type Group,
@@ -25,17 +25,8 @@ export function useRolly(
   const rollyBoardRef = useRef<Group>(null);
   const rollyWorldRef = useRef<Group>(null);
 
-  const startRef = useRef<Mesh>(null);
-
   const worldPosition = new Vector3();
-
-  function syncRollyWorldToRollyBoard() {
-    if (!rollyBoardRef.current || !rollyWorldRef.current) return;
-
-    rollyBoardRef.current.getWorldPosition(worldPosition);
-
-    rollyWorldRef.current.position.copy(worldPosition);
-  }
+  const isRollyWorld = useRef(true);
 
   const rollyDrag = useRef<RollyDragState>({
     targetTile: {
@@ -45,11 +36,28 @@ export function useRolly(
     targetPosition: null,
   });
 
+  function syncRollyWorldToRollyBoard() {
+    if (!rollyBoardRef.current || !rollyWorldRef.current) return;
+    if (
+      gameInfos.rolly.actualPlace.type === "start" &&
+      rollyBoardRef.current.position.y === 0.6
+    ) {
+      isRollyWorld.current = true;
+      return;
+    }
+
+    isRollyWorld.current = false;
+
+    rollyBoardRef.current.getWorldPosition(worldPosition);
+    rollyWorldRef.current.position.copy(worldPosition);
+  }
+
   function handlePointerDown(e: ThreeEvent<PointerEvent>) {
     if (e.button !== 0) return;
     if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) return;
     e.stopPropagation();
     document.body.style.cursor = "grabbing";
+
     setGameInfos((prev) => ({
       ...prev,
       rolly: {
@@ -64,51 +72,76 @@ export function useRolly(
       grabbing: "rolly",
     }));
   }
-  function handlePointerUp() {
-    if (!gameInfos.rolly.isDragging) return;
-    const lastTileId = gameInfos.board.tiles.lastValidTileId;
-    document.body.style.cursor = "default";
 
-    if (lastTileId === null) {
-      rollyDrag.current.targetPosition = [
-        gameInfos.rolly.position.x,
-        gameInfos.rolly.position.y,
-        gameInfos.rolly.position.z,
-      ];
-      setGameInfos((prev) => ({
+  function pointerUp(
+    type: "start" | "insideBoard" | "outsideBoard",
+    position: { x: number; y: number; z: number } | null,
+  ) {
+    if (position) {
+      rollyDrag.current.targetPosition = [position.x, position.y, position.z];
+    }
+
+    setGameInfos((prev) => {
+      if (type === "outsideBoard") {
+        return {
+          ...prev,
+          rolly: {
+            ...prev.rolly,
+            isDragging: false,
+            isFalling: true,
+          },
+          grabbing: null,
+        };
+      }
+
+      return {
         ...prev,
         rolly: {
           ...prev.rolly,
+          position: {
+            x: position.x,
+            y: position.y,
+            z: position.z,
+          },
           isDragging: false,
           isFalling: true,
         },
         grabbing: null,
-      }));
-      return;
+      };
+    });
+  }
+
+  function handlePointerUp() {
+    if (!gameInfos.rolly.isDragging) return;
+    document.body.style.cursor = "default";
+
+    if (gameInfos.placeHovered.type === "board") {
+      const lastTileId = gameInfos.board.tiles.lastValidTileId;
+
+      if (lastTileId === null) {
+        pointerUp("outsideBoard", {
+          x: gameInfos.rolly.position.x,
+          y: gameInfos.rolly.position.y,
+          z: gameInfos.rolly.position.z,
+        });
+        return;
+      }
+
+      const tile = gameInfos.board.tiles.grid[lastTileId];
+
+      pointerUp("insideBoard", {
+        x: tile.position.x,
+        y: 0.6,
+        z: tile.position.z,
+      });
+    } else if (gameInfos.placeHovered.type === "start") {
+      console.log("test");
+      pointerUp("start", {
+        x: gameInfos.start.positionX,
+        y: 0.6,
+        z: 0,
+      });
     }
-
-    const tile = gameInfos.board.tiles.grid[lastTileId];
-
-    rollyDrag.current.targetPosition = [
-      tile.position.x,
-      rollyBoardRef.current.position.y,
-      tile.position.z,
-    ];
-
-    setGameInfos((prev) => ({
-      ...prev,
-      rolly: {
-        ...prev.rolly,
-        position: {
-          x: tile.position.x,
-          y: prev.rolly.position.y,
-          z: tile.position.z,
-        },
-        isDragging: false,
-        isFalling: true,
-      },
-      grabbing: null,
-    }));
   }
 
   function handlePointerEnter(e: ThreeEvent<PointerEvent>) {
@@ -124,156 +157,145 @@ export function useRolly(
   function snapRolly(delta: number) {
     if (!rollyDrag.current.targetPosition) return;
 
-    const [targetX, , targetZ] = rollyDrag.current.targetPosition;
+    const [targetX, targetY, targetZ] = rollyDrag.current.targetPosition;
 
-    if (
-      rollyBoardRef.current.position.x === targetX &&
-      rollyBoardRef.current.position.y === 0.6 &&
-      rollyBoardRef.current.position.z === targetZ
-    )
-      return;
+    moveRolly(delta, {
+      x: targetX,
+      y: targetY,
+      z: targetZ,
+    });
 
-    rollyBoardRef.current.position.x = MathUtils.lerp(
-      rollyBoardRef.current.position.x,
-      targetX,
-      delta * 10,
-    );
+    rollySnapped(targetX, targetY, targetZ);
+  }
 
-    rollyBoardRef.current.position.z = MathUtils.lerp(
-      rollyBoardRef.current.position.z,
-      targetZ,
-      delta * 10,
-    );
-
-    rollyBoardRef.current.position.y = MathUtils.lerp(
-      rollyBoardRef.current.position.y,
-      0.6,
-      delta * 10,
-    );
-
+  function rollySnapped(targetX: number, targetY: number, targetZ: number) {
     const distance = Math.sqrt(
       (rollyBoardRef.current.position.x - targetX) ** 2 +
-        (rollyBoardRef.current.position.y - 0.6) ** 2 +
+        (rollyBoardRef.current.position.y - targetY) ** 2 +
         (rollyBoardRef.current.position.z - targetZ) ** 2,
     );
 
-    if (distance < 0.01) {
-      // Force la position exacte
-      rollyBoardRef.current.position.x = targetX;
-      rollyBoardRef.current.position.y = 0.6;
-      rollyBoardRef.current.position.z = targetZ;
+    if (distance >= 0.01) return;
 
-      rollyDrag.current.targetPosition = null;
+    rollyBoardRef.current.position.set(targetX, targetY, targetZ);
 
-      setGameInfos((prev) => ({
-        ...prev,
-        board: {
-          ...prev.board,
-          tiles: {
-            ...prev.board.tiles,
-            grid: {
-              ...prev.board.tiles.grid,
-              [rollyDrag.current.targetTile.tileId]: {
-                ...prev.board.tiles.grid[rollyDrag.current.targetTile.tileId],
-                color: gameInfos.rolly.color,
+    rollyDrag.current.targetPosition = null;
+
+    setGameInfos((prev) => {
+      if (gameInfos.placeHovered.type === "board") {
+        return {
+          ...prev,
+          board: {
+            ...prev.board,
+            tiles: {
+              ...prev.board.tiles,
+              grid: {
+                ...prev.board.tiles.grid,
+                [rollyDrag.current.targetTile.tileId]: {
+                  ...prev.board.tiles.grid[rollyDrag.current.targetTile.tileId],
+                  color: gameInfos.rolly.color,
+                },
               },
             },
           },
-        },
-        rolly: {
-          ...prev.rolly,
-          isFalling: false,
-        },
-      }));
+          rolly: {
+            ...prev.rolly,
+            isFalling: false,
+            actualPlace: {
+              type: "board",
+              id: rollyDrag.current.targetTile.tileId,
+            },
+          },
+        };
+      } else if (gameInfos.placeHovered.type === "start") {
+        return {
+          ...prev,
+          rolly: {
+            ...prev.rolly,
+            isFalling: false,
+            actualPlace: {
+              type: "start",
+              id: null,
+            },
+          },
+        };
+      }
+    });
+  }
+
+  function dragRolly(delta: number) {
+    if (!gameInfos.rolly.isDragging || gameInfos.grabbing !== "rolly") return;
+    switch (gameInfos.placeHovered.type) {
+      case "board":
+        const tileId =
+          gameInfos.placeHovered.id ?? gameInfos.board.tiles.lastValidTileId;
+
+        if (tileId === null) return;
+
+        rollyDrag.current.targetTile = {
+          tileId: tileId,
+          infos: gameInfos.board.tiles.grid[tileId],
+        };
+
+        moveRolly(delta, {
+          x: rollyDrag.current.targetTile.infos.position.x,
+          y: 3,
+          z: rollyDrag.current.targetTile.infos.position.z,
+        });
+
+        break;
+
+      case "start":
+        rollyDrag.current.targetTile = {
+          tileId: null,
+          infos: {
+            position: {
+              x: gameInfos.start.positionX,
+              z: 0,
+            },
+          },
+        };
+
+        moveRolly(delta, {
+          x: rollyDrag.current.targetTile.infos.position.x,
+          y: 3,
+          z: rollyDrag.current.targetTile.infos.position.z,
+        });
+
+        break;
+
+      case "bucket":
+        break;
     }
   }
-  function dragRolly(delta: number) {
-    if (!gameInfos.rolly.isDragging) return;
-    const tileId =
-      gameInfos.tileHovered.id ?? gameInfos.board.tiles.lastValidTileId;
-    if (tileId === null) return;
 
-    rollyDrag.current.targetTile = {
-      tileId: tileId,
-      infos: gameInfos.board.tiles.grid[tileId],
-    };
-
+  function moveRolly(
+    delta: number,
+    target: { x: number; y: number; z: number },
+  ) {
     rollyBoardRef.current.position.x = MathUtils.lerp(
       rollyBoardRef.current.position.x,
-      rollyDrag.current.targetTile.infos.position.x,
+      target.x,
       delta * 10,
     );
 
     rollyBoardRef.current.position.z = MathUtils.lerp(
       rollyBoardRef.current.position.z,
-      rollyDrag.current.targetTile.infos.position.z,
+      target.z,
       delta * 10,
     );
 
     rollyBoardRef.current.position.y = MathUtils.lerp(
       rollyBoardRef.current.position.y,
-      3,
+      target.y,
       delta * 10,
     );
   }
 
-  //   function dragRolly(delta: number) {
-  //     if (!gameInfos.rolly.isDragging || gameInfos.grabbing !== "rolly") return;
-  //     switch (gameInfos.tileHovered.type) {
-  //       case "board":
-  //         const tileId =
-  //           gameInfos.tileHovered.id ?? gameInfos.board.tiles.lastValidTileId;
-
-  //         if (tileId === null) return;
-
-  //         rollyDrag.current.targetTile = {
-  //           tileId: tileId,
-  //           infos: gameInfos.board.tiles.grid[tileId],
-  //         };
-
-  //         break;
-
-  //       case "start":
-  //         rollyDrag.current.targetTile = {
-  //           tileId: null,
-  //           infos: {
-  //             position: {
-  //               x: startRef.current.position.x,
-  //               z: startRef.current.position.z,
-  //             },
-  //           },
-  //         };
-
-  //         break;
-
-  //       case "bucket":
-  //         // récupérer bucketRef
-
-  //         break;
-  //     }
-
-  //     rollyBoardRef.current.position.x = MathUtils.lerp(
-  //       rollyBoardRef.current.position.x,
-  //       rollyDrag.current.targetTile.infos.position.x,
-  //       delta * 10,
-  //     );
-
-  //     rollyBoardRef.current.position.z = MathUtils.lerp(
-  //       rollyBoardRef.current.position.z,
-  //       rollyDrag.current.targetTile.infos.position.z,
-  //       delta * 10,
-  //     );
-
-  //     rollyBoardRef.current.position.y = MathUtils.lerp(
-  //       rollyBoardRef.current.position.y,
-  //       3,
-  //       delta * 10,
-  //     );
-  //   }
   return {
     rollyBoardRef,
     rollyWorldRef,
-    startRef,
+    isRollyWorld,
     rolly: {
       animations: {
         dragRolly,

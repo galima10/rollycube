@@ -1,6 +1,7 @@
 import type { BoardType } from "@/elements/Board/board.types";
 import type { RollyType } from "@/elements/Rolly/rolly.types";
 import type { BucketType } from "@/elements/Bucket/bucket.types";
+import type { StartType } from "@/elements/Start/start.types";
 
 export type GameStateType =
   | "startscreen"
@@ -8,7 +9,7 @@ export type GameStateType =
   | "playing"
   | "finish";
 
-export type TileHovered =
+export type PlaceType =
   | {
       type: "board";
       id: number | null;
@@ -29,7 +30,7 @@ export type TileHovered =
 export interface GameInfos {
   state: GameStateType;
   board: BoardType;
-  tileHovered: TileHovered;
+  placeHovered: PlaceType;
   rolly: RollyType;
   buckets: {
     bucket1: BucketType;
@@ -38,4 +39,5 @@ export interface GameInfos {
     bucket4: BucketType;
   };
   grabbing: "rolly" | "board" | null;
+  start: StartType;
 }

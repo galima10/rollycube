@@ -1,4 +1,5 @@
 import type { Mesh, MeshStandardMaterial, AnimationClip } from "three";
+import type { PlaceType } from "@/scenes/Game/game.types";
 
 export type RollyGLTFResult = GLTF & {
   nodes: {
@@ -20,4 +21,5 @@ export interface RollyType {
   };
   isDragging: boolean;
   isFalling: boolean;
+  actualPlace: PlaceType;
 }

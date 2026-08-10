@@ -34,12 +34,11 @@ export function useBoard(
     if (!gameInfos.rolly.isDragging) return;
     setGameInfos((prev) => ({
       ...prev,
-      tileHovered: {
+      placeHovered: {
         type: "board",
         id: tileId,
       },
     }));
-    // console.log(gameInfos.tileHovered.id)
 
     if (tileId !== null) {
       setGameInfos((prev) => ({
@@ -51,10 +50,6 @@ export function useBoard(
             lastValidTileId: tileId,
           },
         },
-        // tileHovered: {
-        //   type: "board",
-        //   id: tileId,
-        // },
       }));
     }
   }

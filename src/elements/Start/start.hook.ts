@@ -11,25 +11,13 @@ export function useStart(
     e.stopPropagation();
     setGameInfos((prev) => ({
       ...prev,
-      tileHovered: {
+      placeHovered: {
         type: "start",
-        id: null,
-      },
-    }));
-    console.log("test");
-  }
-  function handlePointerLeave(e: ThreeEvent<PointerEvent>) {
-    if (gameInfos.grabbing !== "rolly") return;
-    e.stopPropagation();
-    setGameInfos((prev) => ({
-      ...prev,
-      tileHovered: {
-        type: null,
         id: null,
       },
     }));
   }
   return {
-    start: { handlePointerEnter, handlePointerLeave },
+    start: { handlePointerEnter },
   };
 }

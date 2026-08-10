@@ -1,3 +1,3 @@
 export interface StartType {
-    isHovered
+  positionX: number;
 }

@@ -8,12 +8,12 @@ const tileSize = 1;
 
 export default function BoardModel({
   hoverTile,
-  tileHovered,
+  placeHovered,
   tileRefs,
   board,
 }: {
   hoverTile: (tileId: number | null) => void;
-  tileHovered: null | number;
+  placeHovered: null | number;
   tileRefs: RefObject<Map<number, Mesh>>;
   board: {
     infos: BoardType;
@@ -42,7 +42,7 @@ export default function BoardModel({
       <Tiles
         tileSize={tileSize}
         hoverTile={hoverTile}
-        tileHovered={tileHovered}
+        placeHovered={placeHovered}
         tileRefs={tileRefs}
         board={board.infos}
       />
@@ -63,7 +63,7 @@ function TileModel({
   position,
   tileSize,
   hoverTile,
-  tileHovered,
+  placeHovered,
   tileId,
   tileRefs,
   tile,
@@ -71,7 +71,7 @@ function TileModel({
   position: Vector3Tuple;
   tileSize: number;
   hoverTile: (tileId: number | null) => void;
-  tileHovered: null | number;
+  placeHovered: null | number;
   tileId: number;
   tileRefs: RefObject<Map<number, Mesh>>;
   tile: TileInfosType;
@@ -95,8 +95,8 @@ function TileModel({
       <boxGeometry args={[tileSize, 0.05, tileSize]} />
       <meshStandardMaterial
         color={tile.color}
-        emissive={tileHovered === tileId ? "#ffffff" : "#000000"}
-        emissiveIntensity={tileHovered === tileId ? 0.15 : 0}
+        emissive={placeHovered === tileId ? "#ffffff" : "#000000"}
+        emissiveIntensity={placeHovered === tileId ? 0.15 : 0}
       />
       <Edges color="white" lineWidth={2} />
     </mesh>
@@ -106,13 +106,13 @@ function TileModel({
 function Tiles({
   tileSize,
   hoverTile,
-  tileHovered,
+  placeHovered,
   tileRefs,
   board,
 }: {
   tileSize: number;
   hoverTile: (tileId: number | null) => void;
-  tileHovered: null | number;
+  placeHovered: null | number;
   tileRefs: RefObject<Map<number, Mesh>>;
   board: BoardType;
 }) {
@@ -127,7 +127,7 @@ function Tiles({
             tileId={tileId}
             position={[tile.position.x, 0.11, tile.position.z]}
             hoverTile={hoverTile}
-            tileHovered={tileHovered}
+            placeHovered={placeHovered}
             tileRefs={tileRefs}
             tileSize={tileSize}
             tile={tile}

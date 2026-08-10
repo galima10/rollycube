@@ -15,6 +15,10 @@ export function useGame() {
       },
       isDragging: false,
       isFalling: false,
+      actualPlace: {
+        type: "start",
+        id: null,
+      },
     },
     buckets: {
       bucket1: {
@@ -35,9 +39,12 @@ export function useGame() {
       },
     },
     grabbing: null,
-    tileHovered: {
-      type: null,
+    placeHovered: {
+      type: "start",
       id: null,
+    },
+    start: {
+      positionX: -(12 / 2 + 4),
     },
   });
 
@@ -61,6 +68,10 @@ export function useGame() {
         },
         isDragging: false,
         isFalling: false,
+        actualPlace: {
+          type: null,
+          id: null,
+        },
       },
       buckets: {
         bucket1: {
@@ -81,9 +92,12 @@ export function useGame() {
         },
       },
       grabbing: null,
-      tileHovered: {
+      placeHovered: {
         type: "start",
         id: null,
+      },
+      start: {
+        positionX: -(12 / 2 + 3),
       },
     });
   }

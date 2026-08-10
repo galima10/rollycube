@@ -16,7 +16,7 @@ export default function GameScene() {
     gameInfos,
     setGameInfos,
   );
-  const { rollyBoardRef, rollyWorldRef, startRef, rolly } = useRolly(
+  const { rollyBoardRef, rollyWorldRef, rolly, isRollyWorld } = useRolly(
     gameInfos,
     setGameInfos,
   );
@@ -52,16 +52,17 @@ export default function GameScene() {
         <RollyModel
           scale={[0.5, 0.5, 0.5]}
           paintColor={gameInfos.rolly.color}
-          position={[0, 0.6, 0]}
+          position={[gameInfos.start.positionX, 0.6, 0]}
           rollyRef={rollyBoardRef}
           rolly={{
             animations: rolly.animations,
             interactions: rolly.interactions,
           }}
+          visible={!isRollyWorld.current}
         />
         <BoardModel
           hoverTile={hoverTile}
-          tileHovered={gameInfos.tileHovered.id}
+          placeHovered={gameInfos.placeHovered.id}
           tileRefs={tileRefs}
           board={{
             infos: gameInfos.board,
@@ -73,7 +74,7 @@ export default function GameScene() {
       <RollyModel
         scale={[0.5, 0.5, 0.5]}
         paintColor={gameInfos.rolly.color}
-        position={[0, 0.6, 0]}
+        position={[gameInfos.start.positionX, 0.6, 0]}
         rollyRef={rollyWorldRef}
         rolly={{
           animations: {
@@ -82,8 +83,9 @@ export default function GameScene() {
           },
           interactions: {},
         }}
+        visible={isRollyWorld.current}
       />
-      <StartModel position={[0, 4, 0]} gameInfos={gameInfos} start={start} startRef={startRef} />
+      <StartModel position={[0, 4, 0]} gameInfos={gameInfos} start={start} />
     </Canvas>
   );
 }

@@ -9,32 +9,26 @@ type StartModelProps = ThreeElements["mesh"] & {
   gameInfos: GameInfos;
   start: {
     handlePointerEnter: (e: ThreeEvent<PointerEvent>) => void;
-    handlePointerLeave: (e: ThreeEvent<PointerEvent>) => void;
+    // handlePointerLeave: (e: ThreeEvent<PointerEvent>) => void;
   };
-  startRef: RefObject<Mesh>;
 };
 
 export default function StartModel({
   gameInfos,
   start,
-  startRef,
   ...props
 }: StartModelProps) {
-  const boardDistance = gameInfos.board.boardSize / 2 + 3;
   return (
     <mesh
       {...props}
-      position={[-boardDistance, 0, 0]}
+      position={[gameInfos.start.positionX, 0, 0]}
       onPointerEnter={start.handlePointerEnter}
-      onPointerLeave={start.handlePointerLeave}
-      ref={startRef}
     >
-      <boxGeometry args={[tileSize * 1.25, 0.05, tileSize * 1.25]} />
+      <boxGeometry args={[tileSize * 1.25, 0.2, tileSize * 1.25]} />
       <meshStandardMaterial
-        // color={"#616365"}
-        color={"red"}
-        // emissive={tileHovered === tileId ? "#ffffff" : "#000000"}
-        // emissiveIntensity={tileHovered === tileId ? 0.15 : 0}
+        color={"#37393a"}
+        emissive={gameInfos.placeHovered.type === "start" ? "#ffffff" : "#000000"}
+        emissiveIntensity={gameInfos.placeHovered.type === "start" ? 0.15 : 0}
       />
     </mesh>
   );
