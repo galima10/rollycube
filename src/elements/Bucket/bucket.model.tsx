@@ -2,36 +2,46 @@ import { useGLTF } from "@react-three/drei";
 import { type ThreeElements, type ThreeEvent } from "@react-three/fiber";
 import { BucketGLTFResult } from "./bucket.types";
 import { getBucketMaterials } from "./bucket.materials";
-import { useMemo } from "react";
-import { MeshLambertMaterial } from "three";
+import { useEffect, type RefObject } from "react";
+import { type Mesh } from "three";
 import type { GameInfos } from "@/scenes/Game/game.types";
 import type { BucketType } from "./bucket.types";
+import { setColor } from "@/scenes/Game/set-color.utils";
 
 type BucketModelProps = ThreeElements["group"] & {
+  bucketsPaintRefs: RefObject<Map<number, Mesh>>;
+  bucketId: number;
   paintColor: string;
-  isHovered: boolean;
 };
 
-function BucketModel({ paintColor, isHovered, ...props }: BucketModelProps) {
+function BucketModel({
+  bucketsPaintRefs,
+  bucketId,
+  paintColor,
+  ...props
+}: BucketModelProps) {
   const { nodes } = useGLTF(
     `${import.meta.env.BASE_URL}models/bucket.glb`,
   ) as BucketGLTFResult;
   const materials = getBucketMaterials();
-  const paintMaterial = useMemo(
-    () =>
-      new MeshLambertMaterial({
-        color: paintColor,
-        emissive: isHovered ? "#ffffff" : "#000000",
-        emissiveIntensity: isHovered ? 0.15 : 0,
-      }),
-    [paintColor, isHovered],
-  );
+  useEffect(() => {
+    const bucketMesh = bucketsPaintRefs.current.get(bucketId);
+    setColor(paintColor, bucketMesh);
+  }, []);
   return (
     <group {...props} dispose={null}>
       <group rotation={[Math.PI, Math.PI / 2, Math.PI]} scale={0.75}>
         <mesh geometry={nodes.Cube009.geometry} material={materials.body} />
         <mesh geometry={nodes.Cube009_1.geometry} material={materials.handle} />
-        <mesh geometry={nodes.Paint.geometry} material={paintMaterial} />
+        <mesh
+          geometry={nodes.Paint.geometry}
+          ref={(mesh) => {
+            if (mesh) bucketsPaintRefs.current.set(bucketId, mesh);
+            else bucketsPaintRefs.current.delete(bucketId);
+          }}
+        >
+          <meshStandardMaterial />
+        </mesh>
       </group>
     </group>
   );
@@ -40,42 +50,44 @@ function BucketModel({ paintColor, isHovered, ...props }: BucketModelProps) {
 useGLTF.preload("/bucket.glb");
 
 type BucketsModelProps = ThreeElements["group"] & {
-  gameInfos: GameInfos;
+  gameInfos: RefObject<GameInfos>;
   buckets: {
     handlePointerEnter: (e: ThreeEvent<PointerEvent>, bucketId: number) => void;
   };
+  bucketsPaintRefs: RefObject<Map<number, Mesh>>;
 };
 
 export default function BucketsModel({
   gameInfos,
   buckets,
+  bucketsPaintRefs,
   ...props
 }: BucketsModelProps) {
   return (
     <group
       {...props}
       dispose={null}
-      position={[gameInfos.buckets.positionX, 0, 0]}
+      position={[gameInfos.current.buckets.positionX, 0, 0]}
     >
-      {(Object.entries(gameInfos.buckets.colors) as [string, BucketType][]).map(
-        ([bucketId, bucket], index) => {
-          return (
-            <BucketModel
-              key={index}
-              paintColor={bucket.color}
-              position={[0, 0, bucket.positionZ]}
-              onPointerEnter={(e) =>
-                buckets.handlePointerEnter(e, Number(bucketId))
-              }
-              isHovered={
-                gameInfos.grabbing === "rolly" &&
-                gameInfos.placeHovered.type === "bucket" &&
-                gameInfos.placeHovered.id === Number(bucketId)
-              }
-            />
-          );
-        },
-      )}
+      {(
+        Object.entries(gameInfos.current.buckets.colors) as [
+          string,
+          BucketType,
+        ][]
+      ).map(([bucketId, bucket], index) => {
+        return (
+          <BucketModel
+            key={index}
+            position={[0, 0, bucket.positionZ]}
+            onPointerEnter={(e) =>
+              buckets.handlePointerEnter(e, Number(bucketId))
+            }
+            bucketId={Number(bucketId)}
+            bucketsPaintRefs={bucketsPaintRefs}
+            paintColor={bucket.color}
+          />
+        );
+      })}
     </group>
   );
 }

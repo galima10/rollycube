@@ -1,9 +1,10 @@
-import { Color, type Vector3Tuple, type Mesh, type Group } from "three";
+import { type Vector3Tuple, type Mesh } from "three";
 import { Edges } from "@react-three/drei";
-import type { BoardType, TileInfosType } from "./board.types";
-import { type RefObject } from "react";
+import type { BoardType } from "./board.types";
+import { type RefObject, useEffect } from "react";
 import { type ThreeEvent, useFrame } from "@react-three/fiber";
 import type { GameInfos } from "@/scenes/Game/game.types";
+import { setColor } from "@/scenes/Game/set-color.utils";
 
 export default function BoardModel({
   hoverTile,
@@ -27,9 +28,11 @@ export default function BoardModel({
       returnBoard: (delta: number) => void;
     };
   };
-  gameInfos: GameInfos;
+  gameInfos: RefObject<GameInfos>;
 }) {
-  const size = Math.sqrt(Object.keys(gameInfos.board.tiles.grid).length);
+  const size = Math.sqrt(
+    Object.keys(gameInfos.current.board.tiles.grid).length,
+  );
   const boardColor = "#a5a9ab";
   useFrame((_, delta) => {
     board.animations.leanBoard(delta);
@@ -39,9 +42,8 @@ export default function BoardModel({
     <group dispose={null} rotation={[0, 0, 0]}>
       <Tiles
         hoverTile={hoverTile}
-        placeHovered={gameInfos.placeHovered.type === "board" && gameInfos.placeHovered.id}
         tileRefs={tileRefs}
-        board={gameInfos.board}
+        board={gameInfos.current.board}
       />
       <Border
         size={size}
@@ -59,18 +61,20 @@ export default function BoardModel({
 function TileModel({
   position,
   hoverTile,
-  placeHovered,
   tileId,
   tileRefs,
-  tile,
+  defaultColor,
 }: {
   position: Vector3Tuple;
   hoverTile: (tileId: number | null) => void;
-  placeHovered: null | number;
   tileId: number;
   tileRefs: RefObject<Map<number, Mesh>>;
-  tile: TileInfosType;
+  defaultColor: string;
 }) {
+  useEffect(() => {
+    const tileMesh = tileRefs.current.get(tileId);
+    setColor(defaultColor, tileMesh);
+  }, []);
   return (
     <mesh
       position={position}
@@ -88,11 +92,7 @@ function TileModel({
       }}
     >
       <boxGeometry args={[1, 0.05, 1]} />
-      <meshStandardMaterial
-        color={tile.color}
-        emissive={placeHovered === tileId ? "#ffffff" : "#000000"}
-        emissiveIntensity={placeHovered === tileId ? 0.15 : 0}
-      />
+      <meshStandardMaterial />
       <Edges color="white" lineWidth={2} />
     </mesh>
   );
@@ -100,12 +100,10 @@ function TileModel({
 
 function Tiles({
   hoverTile,
-  placeHovered,
   tileRefs,
   board,
 }: {
   hoverTile: (tileId: number | null) => void;
-  placeHovered: null | number;
   tileRefs: RefObject<Map<number, Mesh>>;
   board: BoardType;
 }) {
@@ -120,9 +118,8 @@ function Tiles({
             tileId={tileId}
             position={[tile.position.x, 0.11, tile.position.z]}
             hoverTile={hoverTile}
-            placeHovered={placeHovered}
             tileRefs={tileRefs}
-            tile={tile}
+            defaultColor={board.defaultTileColor}
           />
         );
       })}

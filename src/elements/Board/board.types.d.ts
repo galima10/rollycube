@@ -27,4 +27,5 @@ export interface BoardType {
     x: number;
     z: number;
   };
+  defaultTileColor: string;
 }

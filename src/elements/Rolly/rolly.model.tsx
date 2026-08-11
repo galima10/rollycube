@@ -6,12 +6,14 @@ import {
   type ThreeEvent,
 } from "@react-three/fiber";
 import { getRollyMaterials } from "./rolly.materials";
-import { MeshLambertMaterial, type Group } from "three";
-import { useMemo, type RefObject } from "react";
+import { type Group, type Mesh } from "three";
+import { useEffect, type RefObject } from "react";
+import { setColor } from "@/scenes/Game/set-color.utils";
 
 type RollyModelProps = ThreeElements["group"] & {
   paintColor: string;
   rollyRef: RefObject<Group>;
+  paintRef: RefObject<Mesh>;
   rolly: {
     animations: {
       dragRolly?: (delta: number) => void;
@@ -19,7 +21,7 @@ type RollyModelProps = ThreeElements["group"] & {
       syncRollyWorldToRollyBoard?: () => void;
       rollRolly?: (delta: number) => void;
     };
-    interactions: {
+    interactions?: {
       handlePointerDown?: (e: ThreeEvent<PointerEvent>) => void;
       handlePointerLeave?: (e: ThreeEvent<PointerEvent>) => void;
       handlePointerEnter?: (e: ThreeEvent<PointerEvent>) => void;
@@ -30,6 +32,7 @@ type RollyModelProps = ThreeElements["group"] & {
 export default function RollyModel({
   paintColor,
   rollyRef,
+  paintRef,
   rolly,
   ...props
 }: RollyModelProps) {
@@ -37,34 +40,31 @@ export default function RollyModel({
     `${import.meta.env.BASE_URL}models/rolly.glb`,
   ) as RollyGLTFResult;
   const materials = getRollyMaterials();
-  const paintMaterial = useMemo(
-    () =>
-      new MeshLambertMaterial({
-        color: paintColor,
-      }),
-    [paintColor],
-  );
   useFrame((_, delta) => {
     rolly.animations.dragRolly?.(delta);
     rolly.animations.snapRolly?.(delta);
     rolly.animations.rollRolly?.(delta);
     rolly.animations.syncRollyWorldToRollyBoard?.();
   });
+  useEffect(() => {
+    setColor(paintColor, paintRef.current);
+  }, []);
   return (
     <group>
       <group
         {...props}
         dispose={null}
         ref={rollyRef}
-        onPointerDown={rolly.interactions.handlePointerDown}
-        onPointerEnter={rolly.interactions.handlePointerEnter}
-        onPointerLeave={rolly.interactions.handlePointerLeave}
+        onPointerDown={rolly.interactions?.handlePointerDown}
+        onPointerEnter={rolly.interactions?.handlePointerEnter}
+        onPointerLeave={rolly.interactions?.handlePointerLeave}
       >
         <mesh
+          ref={paintRef}
           geometry={nodes.Body.geometry}
-          material={paintMaterial}
-          rotation={[Math.PI, 0, Math.PI]}
-        />
+          rotation={[Math.PI, 0, Math.PI]}>
+            <meshStandardMaterial />
+          </mesh>
         <group
           position={[0.706, 0, 1]}
           rotation={[Math.PI, 0, Math.PI]}

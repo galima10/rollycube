@@ -1,16 +1,19 @@
-import type { GameInfos, GameRefs } from "@/scenes/Game/game.types";
-import {
-  type Dispatch,
-  type SetStateAction,
-  useRef,
-  type RefObject,
-} from "react";
+import type { GameInfos } from "@/scenes/Game/game.types";
+import { useRef, type RefObject } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
-import { type Group, type Vector3Tuple, MathUtils, Vector3 } from "three";
+import {
+  type Group,
+  type Vector3Tuple,
+  MathUtils,
+  Vector3,
+  type Mesh,
+  MeshStandardMaterial,
+} from "three";
 import type { TileInfosType } from "../Board/board.types";
+import { setColor } from "@/scenes/Game/set-color.utils";
 
 interface RollyDragState {
-  targetTile: {
+  targetPlace: {
     id: number | null;
     infos: TileInfosType | null;
   };
@@ -18,20 +21,21 @@ interface RollyDragState {
 }
 
 export function useRolly(
-  gameInfos: GameInfos,
-  setGameInfos: Dispatch<SetStateAction<GameInfos>>,
-  gameRefs: RefObject<GameRefs>,
+  gameInfos: RefObject<GameInfos>,
+  refs: {
+    rollyBoardRef: RefObject<Group>;
+    rollyWorldRef: RefObject<Group>;
+    paintRollyBoardRef: RefObject<Mesh>;
+    paintRollyWorldRef: RefObject<Mesh>;
+    tileRefs: RefObject<Map<number, Mesh>>;
+  },
 ) {
-  const rollyBoardRef = useRef<Group>(null);
-  const rollyWorldRef = useRef<Group>(null);
-
-  const rollyPivotRef = useRef<Group>(null);
+  const { rollyBoardRef, rollyWorldRef, paintRollyBoardRef, paintRollyWorldRef, tileRefs } = refs;
 
   const worldPosition = new Vector3();
-  const isRollyWorld = useRef(true);
 
   const rollyDrag = useRef<RollyDragState>({
-    targetTile: {
+    targetPlace: {
       id: null,
       infos: null,
     },
@@ -41,16 +45,17 @@ export function useRolly(
   function syncRollyWorldToRollyBoard() {
     if (!rollyBoardRef.current || !rollyWorldRef.current) return;
     if (
-      (gameInfos.rolly.actualPlace.type === "start" &&
+      (gameInfos.current.rolly.actualPlace.type === "start" &&
         rollyBoardRef.current.position.y === 0.6) ||
-      (gameInfos.rolly.actualPlace.type === "bucket" &&
+      (gameInfos.current.rolly.actualPlace.type === "bucket" &&
         rollyBoardRef.current.position.y === 1)
     ) {
-      isRollyWorld.current = true;
+      rollyBoardRef.current.visible = false;
+      rollyWorldRef.current.visible = true;
       return;
     }
-
-    isRollyWorld.current = false;
+    rollyBoardRef.current.visible = true;
+    rollyWorldRef.current.visible = false;
 
     rollyBoardRef.current.getWorldPosition(worldPosition);
     rollyWorldRef.current.position.copy(worldPosition);
@@ -58,24 +63,19 @@ export function useRolly(
 
   function handlePointerDown(e: ThreeEvent<PointerEvent>) {
     if (e.button !== 0) return;
-    if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) return;
-    if (gameRefs.current.board.isLeaning) return;
+    if (gameInfos.current.rolly.isDragging || gameInfos.current.rolly.isFalling)
+      return;
+    if (gameInfos.current.board.isLeaning) return;
     e.stopPropagation();
     document.body.style.cursor = "grabbing";
 
-    setGameInfos((prev) => ({
-      ...prev,
-      rolly: {
-        ...prev.rolly,
-        position: {
-          x: rollyBoardRef.current.position.x,
-          y: rollyBoardRef.current.position.y,
-          z: rollyBoardRef.current.position.z,
-        },
-        isDragging: true,
-      },
-      grabbing: "rolly",
-    }));
+    gameInfos.current.rolly.position = {
+      x: rollyBoardRef.current.position.x,
+      y: rollyBoardRef.current.position.y,
+      z: rollyBoardRef.current.position.z,
+    };
+    gameInfos.current.rolly.isDragging = true;
+    gameInfos.current.grabbing = "rolly";
   }
 
   function pointerUp(
@@ -86,70 +86,53 @@ export function useRolly(
       rollyDrag.current.targetPosition = [position.x, position.y, position.z];
     }
 
-    setGameInfos((prev) => {
-      if (type === "outside") {
-        return {
-          ...prev,
-          rolly: {
-            ...prev.rolly,
-            isDragging: false,
-            isFalling: true,
-          },
-          grabbing: null,
-        };
-      }
-
-      return {
-        ...prev,
-        rolly: {
-          ...prev.rolly,
-          position: {
-            x: position.x,
-            y: position.y,
-            z: position.z,
-          },
-          isDragging: false,
-          isFalling: true,
-        },
-        grabbing: null,
+    if (type !== "outside")
+      gameInfos.current.rolly.position = {
+        x: position.x,
+        y: position.y,
+        z: position.z,
       };
-    });
+
+    gameInfos.current.rolly.isDragging = false;
+    gameInfos.current.rolly.isFalling = true;
+    gameInfos.current.grabbing = null;
   }
 
   function handlePointerUp() {
-    if (!gameInfos.rolly.isDragging) return;
+    if (!gameInfos.current.rolly.isDragging) return;
     document.body.style.cursor = "default";
 
-    if (gameInfos.placeHovered.type === "board") {
-      const lastTileId = gameInfos.board.tiles.lastValidTileId;
+    if (gameInfos.current.placeHovered.type === "board") {
+      const lastTileId = gameInfos.current.board.tiles.lastValidTileId;
 
       if (lastTileId === null) {
         pointerUp(null, {
-          x: gameInfos.rolly.position.x,
-          y: gameInfos.rolly.position.y,
-          z: gameInfos.rolly.position.z,
+          x: gameInfos.current.rolly.position.x,
+          y: gameInfos.current.rolly.position.y,
+          z: gameInfos.current.rolly.position.z,
         });
         return;
       }
 
-      const tile = gameInfos.board.tiles.grid[lastTileId];
+      const tile = gameInfos.current.board.tiles.grid[lastTileId];
 
       pointerUp(null, {
         x: tile.position.x,
         y: 0.6,
         z: tile.position.z,
       });
-    } else if (gameInfos.placeHovered.type === "start") {
+    } else if (gameInfos.current.placeHovered.type === "start") {
       pointerUp(null, {
-        x: gameInfos.start.positionX,
+        x: gameInfos.current.start.positionX,
         y: 0.6,
         z: 0,
       });
-    } else if (gameInfos.placeHovered.type === "bucket") {
+    } else if (gameInfos.current.placeHovered.type === "bucket") {
       pointerUp(null, {
-        x: gameInfos.buckets.positionX,
+        x: gameInfos.current.buckets.positionX,
         y: 1,
-        z: gameInfos.buckets.colors[rollyDrag.current.targetTile.id].positionZ,
+        z: gameInfos.current.buckets.colors[rollyDrag.current.targetPlace.id]
+          .positionZ,
       });
     }
   }
@@ -159,7 +142,7 @@ export function useRolly(
     document.body.style.cursor = "grab";
   }
   function handlePointerLeave(e: ThreeEvent<PointerEvent>) {
-    if (gameInfos.grabbing !== null) return;
+    if (gameInfos.current.grabbing !== null) return;
     e.stopPropagation();
     document.body.style.cursor = "default";
   }
@@ -191,118 +174,107 @@ export function useRolly(
 
     rollyDrag.current.targetPosition = null;
 
-    setGameInfos((prev) => {
-      if (gameInfos.placeHovered.type === "board") {
-        return {
-          ...prev,
-          board: {
-            ...prev.board,
-            tiles: {
-              ...prev.board.tiles,
-              grid: {
-                ...prev.board.tiles.grid,
-                [rollyDrag.current.targetTile.id]: {
-                  ...prev.board.tiles.grid[rollyDrag.current.targetTile.id],
-                  color: gameInfos.rolly.color,
-                },
-              },
-            },
-          },
-          rolly: {
-            ...prev.rolly,
-            isFalling: false,
-            actualPlace: {
-              type: "board",
-              id: rollyDrag.current.targetTile.id,
-            },
-          },
-        };
-      } else if (gameInfos.placeHovered.type === "start") {
-        return {
-          ...prev,
-          rolly: {
-            ...prev.rolly,
-            isFalling: false,
-            actualPlace: {
-              type: "start",
-              id: null,
-            },
-          },
-        };
-      } else if (gameInfos.placeHovered.type === "bucket") {
-        return {
-          ...prev,
-          rolly: {
-            ...prev.rolly,
-            isFalling: false,
-            actualPlace: {
-              type: "bucket",
-              id: rollyDrag.current.targetTile.id,
-            },
-            color:
-              gameInfos.buckets.colors[rollyDrag.current.targetTile.id].color,
-          },
-        };
+    if (gameInfos.current.placeHovered.type === "board") {
+      const newColor = gameInfos.current.rolly.color;
+      const tileId = rollyDrag.current.targetPlace.id;
+      gameInfos.current.board.tiles.grid[tileId].color = newColor;
+      gameInfos.current.rolly.actualPlace = {
+        type: "board",
+        id: tileId,
+      };
+
+      const tileMesh = tileRefs.current.get(tileId);
+      if (tileMesh) {
+        const material = tileMesh.material;
+
+        if (material instanceof MeshStandardMaterial) {
+          material.color.set(newColor);
+        }
       }
-    });
+    } else if (gameInfos.current.placeHovered.type === "start") {
+      gameInfos.current.rolly.actualPlace = {
+        type: "start",
+        id: null,
+      };
+    } else if (gameInfos.current.placeHovered.type === "bucket") {
+      const newColor =
+        gameInfos.current.buckets.colors[rollyDrag.current.targetPlace.id]
+          .color;
+      gameInfos.current.rolly.actualPlace = {
+        type: "bucket",
+        id: rollyDrag.current.targetPlace.id,
+      };
+      gameInfos.current.rolly.color = newColor;
+
+      setColor(newColor, paintRollyBoardRef.current);
+      setColor(newColor, paintRollyWorldRef.current);
+    }
+    gameInfos.current.rolly.isFalling = false;
   }
 
   function dragRolly(delta: number) {
-    if (!gameInfos.rolly.isDragging || gameInfos.grabbing !== "rolly") return;
-    switch (gameInfos.placeHovered.type) {
+    if (
+      !gameInfos.current.rolly.isDragging ||
+      gameInfos.current.grabbing !== "rolly"
+    )
+      return;
+    switch (gameInfos.current.placeHovered.type) {
       case "board":
         const tileId =
-          gameInfos.placeHovered.id ?? gameInfos.board.tiles.lastValidTileId;
+          gameInfos.current.placeHovered.id ??
+          gameInfos.current.board.tiles.lastValidTileId;
 
         if (tileId === null) return;
 
-        rollyDrag.current.targetTile = {
+        rollyDrag.current.targetPlace = {
           id: tileId,
-          infos: gameInfos.board.tiles.grid[tileId],
+          infos: gameInfos.current.board.tiles.grid[tileId],
         };
 
         moveRolly(delta, {
-          x: rollyDrag.current.targetTile.infos.position.x,
+          x: rollyDrag.current.targetPlace.infos.position.x,
           y: 3,
-          z: rollyDrag.current.targetTile.infos.position.z,
+          z: rollyDrag.current.targetPlace.infos.position.z,
         });
 
         break;
 
       case "start":
-        rollyDrag.current.targetTile = {
+        rollyDrag.current.targetPlace = {
           id: null,
           infos: {
             position: {
-              x: gameInfos.start.positionX,
+              x: gameInfos.current.start.positionX,
               z: 0,
             },
           },
         };
 
         moveRolly(delta, {
-          x: rollyDrag.current.targetTile.infos.position.x,
+          x: rollyDrag.current.targetPlace.infos.position.x,
           y: 3,
-          z: rollyDrag.current.targetTile.infos.position.z,
+          z: rollyDrag.current.targetPlace.infos.position.z,
         });
 
         break;
 
       case "bucket":
-        rollyDrag.current.targetTile = {
-          id: gameInfos.placeHovered.id,
+        rollyDrag.current.targetPlace = {
+          id: gameInfos.current.placeHovered.id,
           infos: {
             position: {
-              x: gameInfos.buckets.positionX,
-              z: gameInfos.buckets.colors[gameInfos.placeHovered.id].positionZ,
+              x: gameInfos.current.buckets.positionX,
+              z: gameInfos.current.buckets.colors[
+                gameInfos.current.placeHovered.id
+              ].positionZ,
             },
           },
         };
 
         moveRolly(delta, {
-          x: rollyDrag.current.targetTile.infos.position.x,
+          x: rollyDrag.current.targetPlace.infos.position.x,
           y: 3,
-          z: rollyDrag.current.targetTile.infos.position.z,
+          z: rollyDrag.current.targetPlace.infos.position.z,
         });
         break;
     }
@@ -333,12 +305,6 @@ export function useRolly(
 
   return {
     rolly: {
-      refs: {
-        rollyBoardRef,
-        rollyWorldRef,
-        isRollyWorld,
-        rollyPivotRef,
-      },
       animations: {
         dragRolly,
         snapRolly,

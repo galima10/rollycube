@@ -1,12 +1,6 @@
-import type { GameInfos, GameRefs } from "@/scenes/Game/game.types";
-import {
-  type SetStateAction,
-  type Dispatch,
-  useRef,
-  type RefObject,
-  Ref,
-} from "react";
-import { type Group, MathUtils, type Mesh } from "three";
+import type { GameInfos } from "@/scenes/Game/game.types";
+import { useRef, type RefObject } from "react";
+import { type Group, MathUtils, type Mesh, MeshStandardMaterial } from "three";
 import type { ThreeEvent } from "@react-three/fiber";
 
 interface BoardDragState {
@@ -20,12 +14,13 @@ interface BoardDragState {
 }
 
 export function useBoard(
-  gameInfos: GameInfos,
-  setGameInfos: Dispatch<SetStateAction<GameInfos>>,
-  gameRefs: RefObject<GameRefs>,
+  gameInfos: RefObject<GameInfos>,
+  refs: {
+    boardRef: RefObject<Group>;
+    tileRefs: RefObject<Map<number, Mesh>>;
+  },
 ) {
-  const boardRef = useRef<Group>(null);
-  const tileRefs = useRef<Map<number, Mesh>>(new Map());
+  const { boardRef, tileRefs } = refs;
 
   const boardDrag = useRef<BoardDragState>({
     clientY: 0,
@@ -38,43 +33,67 @@ export function useBoard(
   });
 
   function hoverTile(tileId: number | null) {
-    if (!gameInfos.rolly.isDragging) return;
-    setGameInfos((prev) => ({
-      ...prev,
-      placeHovered: {
-        type: "board",
-        id: tileId,
-      },
-    }));
+    if (!gameInfos.current.rolly.isDragging) return;
 
-    if (tileId !== null) {
-      setGameInfos((prev) => ({
-        ...prev,
-        board: {
-          ...prev.board,
-          tiles: {
-            ...prev.board.tiles,
-            lastValidTileId: tileId,
-          },
-        },
-      }));
+    const previousTileId =
+      gameInfos.current.placeHovered.type === "board"
+        ? gameInfos.current.placeHovered.id
+        : null;
+
+    // Retire l'émission de l'ancienne tile
+    if (previousTileId !== null && previousTileId !== tileId) {
+      const previousMesh = tileRefs.current.get(previousTileId);
+
+      if (previousMesh) {
+        const material = previousMesh.material;
+
+        if (material instanceof MeshStandardMaterial) {
+          material.emissive.set("#000000");
+          material.emissiveIntensity = 0;
+        }
+      }
     }
+
+    // Active l'émission de la nouvelle tile
+    if (tileId !== null) {
+      const tileMesh = tileRefs.current.get(tileId);
+
+      if (tileMesh) {
+        const material = tileMesh.material;
+
+        if (material instanceof MeshStandardMaterial) {
+          material.emissive.set("#ffffff");
+          material.emissiveIntensity = 0.15;
+        }
+      }
+
+      gameInfos.current.board.tiles.lastValidTileId = tileId;
+    }
+
+    gameInfos.current.placeHovered = {
+      type: "board",
+      id: tileId,
+    };
   }
+
   function handlePointerEnter(e: ThreeEvent<PointerEvent>) {
     e.stopPropagation();
     document.body.style.cursor = "grab";
   }
   function handlePointerLeave(e: ThreeEvent<PointerEvent>) {
-    if (gameInfos.grabbing !== null) return;
+    if (gameInfos.current.grabbing !== null) return;
     e.stopPropagation();
     document.body.style.cursor = "default";
   }
   function handlePointerDown(e: ThreeEvent<PointerEvent>, borderId: number) {
     if (e.button !== 0) return;
-    if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) {
+    if (
+      gameInfos.current.rolly.isDragging ||
+      gameInfos.current.rolly.isFalling
+    ) {
       return;
     }
-    if (gameRefs.current.board.isLeaning) return;
+    if (gameInfos.current.board.isLeaning) return;
     document.body.style.cursor = "grabbing";
 
     e.stopPropagation();
@@ -89,62 +108,47 @@ export function useBoard(
       },
     };
 
-    setGameInfos((prev) => ({
-      ...prev,
-      board: {
-        ...prev.board,
-        borders: {
-          ...prev.board.borders,
-          [borderId]: {
-            isGrabbing: true,
-          },
-        },
-      },
-      grabbing: "board",
-    }));
+    gameInfos.current.board.borders[borderId].isGrabbing = true;
+    gameInfos.current.grabbing = "board";
   }
 
   function handlePointerUp() {
-    if (gameInfos.rolly.isDragging || gameInfos.rolly.isFalling) {
+    if (
+      gameInfos.current.rolly.isDragging ||
+      gameInfos.current.rolly.isFalling
+    ) {
       return;
     }
     document.body.style.cursor = "default";
 
-    setGameInfos((prev) => ({
-      ...prev,
-      board: {
-        ...prev.board,
-        borders: Object.fromEntries(
-          Object.entries(prev.board.borders).map(([borderId, border]) => [
-            borderId,
-            {
-              ...border,
-              isGrabbing: false,
-            },
-          ]),
-        ),
-      },
-      grabbing: null,
-    }));
+    gameInfos.current.board.borders = Object.fromEntries(
+      Object.entries(gameInfos.current.board.borders).map(
+        ([borderId, border]) => [
+          borderId,
+          {
+            ...border,
+            isGrabbing: false,
+          },
+        ],
+      ),
+    );
+    gameInfos.current.grabbing = null;
 
-    boardDrag.current = {
-      ...boardDrag.current,
-      clientY: null,
-      startClientY: null,
-      borderId: null,
-    };
+    boardDrag.current.clientY = null;
+    boardDrag.current.startClientY = null;
+    boardDrag.current.borderId = null;
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (gameInfos.grabbing !== "board") return;
+    if (gameInfos.current.grabbing !== "board") return;
     document.body.style.cursor = "grabbing";
 
     boardDrag.current.clientY = e.clientY;
   }
 
   function returnBoard(delta: number) {
-    if (gameInfos.grabbing !== null) return;
-    if (!gameRefs.current.board.isLeaning) return;
+    if (gameInfos.current.grabbing !== null) return;
+    if (!gameInfos.current.board.isLeaning) return;
 
     const speed = 5;
 
@@ -169,17 +173,17 @@ export function useBoard(
     ) {
       boardRef.current.rotation.x = 0;
       boardRef.current.rotation.z = 0;
-      gameRefs.current.board.isLeaning = false;
-      gameRefs.current.board.leanAxis = null;
+      gameInfos.current.board.isLeaning = false;
+      gameInfos.current.board.leanAxis = null;
     }
-    gameRefs.current.board.rotation = {
+    gameInfos.current.board.rotation = {
       x: boardRef.current.rotation.x,
       z: boardRef.current.rotation.z,
     };
   }
 
   function leanBoard(delta: number) {
-    if (gameInfos.grabbing !== "board") return;
+    if (gameInfos.current.grabbing !== "board") return;
 
     const { borderId, clientY, startClientY, boardRotation } =
       boardDrag.current;
@@ -219,7 +223,7 @@ export function useBoard(
         -maxAngle,
         maxAngle,
       );
-      gameRefs.current.board.leanAxis = "x";
+      gameInfos.current.board.leanAxis = "x";
     } else {
       boardRef.current.rotation.z = MathUtils.damp(
         boardRef.current.rotation.z,
@@ -233,22 +237,17 @@ export function useBoard(
         -maxAngle,
         maxAngle,
       );
-      gameRefs.current.board.leanAxis = "z";
+      gameInfos.current.board.leanAxis = "z";
     }
 
-    gameRefs.current.board = {
-      ...gameRefs.current.board,
-      isLeaning: true,
-      rotation: {
-        x: boardRef.current.rotation.x,
-        z: boardRef.current.rotation.z,
-      },
+    gameInfos.current.board.isLeaning = true;
+    gameInfos.current.board.rotation = {
+      x: boardRef.current.rotation.x,
+      z: boardRef.current.rotation.z,
     };
   }
 
   return {
-    boardRef,
-    tileRefs,
     hoverTile,
     board: {
       animations: {

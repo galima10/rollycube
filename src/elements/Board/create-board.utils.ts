@@ -35,5 +35,6 @@ export function createBoard(boardSize: BoardSizeType): BoardType {
       z: 0,
     },
     leanAxis: null,
+    defaultTileColor: "#616365",
   };
 }
