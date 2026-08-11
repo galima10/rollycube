@@ -1,3 +1,5 @@
+import type { AxisType } from "@/scenes/Game/game.types";
+
 export type BoardSizeType = 8 | 12;
 
 export interface TileInfosType {

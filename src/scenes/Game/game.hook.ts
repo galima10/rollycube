@@ -25,6 +25,7 @@ export function useGame() {
         z: 0,
       },
       isRolling: false,
+      edgeCenters: [],
     },
     buckets: {
       positionX: 12 / 2 + 4,
@@ -66,6 +67,7 @@ export function useGame() {
   const paintRollyBoardRef = useRef<Mesh>(null);
   const paintRollyWorldRef = useRef<Mesh>(null);
   const rollyPivotRef = useRef<Group>(null);
+  const rollyVisualRef = useRef<Group>(null);
 
   const boardRef = useRef<Group>(null);
   const tileRefs = useRef<Map<number, Mesh>>(new Map());
@@ -81,6 +83,7 @@ export function useGame() {
         rollyPivotRef,
         paintRollyBoardRef,
         paintRollyWorldRef,
+        rollyVisualRef,
       },
       board: {
         boardRef,

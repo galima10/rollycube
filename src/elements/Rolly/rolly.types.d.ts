@@ -1,4 +1,4 @@
-import type { Mesh, MeshStandardMaterial, AnimationClip } from "three";
+import type { Mesh, MeshStandardMaterial, Vector3 } from "three";
 import type { PlaceType } from "@/scenes/Game/game.types";
 
 export type RollyGLTFResult = GLTF & {
@@ -27,6 +27,7 @@ export interface RollyType {
     z: number;
   };
   isRolling: boolean;
+  edgeCenters: Vector3[];
 }
 
 export interface RollyDragState {

@@ -73,6 +73,7 @@ export function useRolly(
     };
     gameInfos.current.rolly.isDragging = true;
     gameInfos.current.grabbing = "rolly";
+    gameInfos.current.rolly.edgeCenters = [];
   }
 
   function pointerUp(
@@ -158,6 +159,28 @@ export function useRolly(
     rollySnapped(targetX, targetY, targetZ);
   }
 
+  function getEdgeCenters() {
+    const { x, y, z } = rollyBoardRef.current.position;
+    const edgeCenters = [
+      new Vector3(x, y - 1, z - 1),
+      new Vector3(x, y - 1, z + 1),
+      new Vector3(x - 1, y - 1, z),
+      new Vector3(x + 1, y - 1, z),
+    ];
+    // const edgeCenters = [
+    //   new Vector3(0, -1, -1), // arrière
+    //   new Vector3(0, -1, 1), // avant
+    //   new Vector3(-1, -1, 0), // gauche
+    //   new Vector3(1, -1, 0), // droite
+    // ];
+
+    // const worldEdgeCenters = edgeCenters.map((v) =>
+    //   v.clone().applyMatrix4(rollyBoardRef.current.matrixWorld),
+    // );
+
+    gameInfos.current.rolly.edgeCenters = edgeCenters;
+  }
+
   function rollySnapped(targetX: number, targetY: number, targetZ: number) {
     const distance = Math.sqrt(
       (rollyBoardRef.current.position.x - targetX) ** 2 +
@@ -188,6 +211,8 @@ export function useRolly(
           material.color.set(newColor);
         }
       }
+
+      getEdgeCenters();
     } else if (gameInfos.current.placeHovered.type === "start") {
       gameInfos.current.rolly.actualPlace = {
         type: "start",

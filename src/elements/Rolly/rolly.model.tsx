@@ -15,6 +15,7 @@ type RollyModelProps = ThreeElements["group"] & {
   rollyRef: RefObject<Group>;
   paintRef: RefObject<Mesh>;
   rollyPivotRef?: RefObject<Group>;
+  rollyVisualRef?: RefObject<Group>;
   rolly: {
     animations: {
       dragRolly?: (delta: number) => void;
@@ -35,6 +36,7 @@ export default function RollyModel({
   rollyRef,
   paintRef,
   rollyPivotRef,
+  rollyVisualRef,
   rolly,
   ...props
 }: RollyModelProps) {
@@ -52,42 +54,40 @@ export default function RollyModel({
     setColor(paintColor, paintRef.current);
   }, []);
   return (
-    <group ref={rollyPivotRef}>
-      <group
-        {...props}
-        dispose={null}
-        ref={rollyRef}
-        onPointerDown={rolly.interactions?.handlePointerDown}
-        onPointerEnter={rolly.interactions?.handlePointerEnter}
-        onPointerLeave={rolly.interactions?.handlePointerLeave}
-      >
-        <mesh
-          ref={paintRef}
-          geometry={nodes.Body.geometry}
-        >
-          <meshStandardMaterial />
-        </mesh>
+    <group {...props} ref={rollyRef}>
+      <group ref={rollyPivotRef}>
         <group
-          position={[0.706, 0, 1]}
-          rotation={[Math.PI, 0, Math.PI]}
-          scale={[0.429, 0.429, 0.078]}
+          dispose={null}
+          ref={rollyVisualRef}
+          onPointerDown={rolly.interactions?.handlePointerDown}
+          onPointerEnter={rolly.interactions?.handlePointerEnter}
+          onPointerLeave={rolly.interactions?.handlePointerLeave}
         >
-          <mesh geometry={nodes.Cube004.geometry} material={materials.eye} />
-          <mesh
-            geometry={nodes.Cube004_1.geometry}
-            material={materials.pupil}
-          />
-        </group>
-        <group
-          position={[-0.706, 0, 1]}
-          rotation={[Math.PI, 0, Math.PI]}
-          scale={[0.429, 0.429, 0.078]}
-        >
-          <mesh geometry={nodes.Cube012.geometry} material={materials.eye} />
-          <mesh
-            geometry={nodes.Cube012_1.geometry}
-            material={materials.pupil}
-          />
+          <mesh ref={paintRef} geometry={nodes.Body.geometry}>
+            <meshStandardMaterial />
+          </mesh>
+          <group
+            position={[0.706, 0, 1]}
+            rotation={[Math.PI, 0, Math.PI]}
+            scale={[0.429, 0.429, 0.078]}
+          >
+            <mesh geometry={nodes.Cube004.geometry} material={materials.eye} />
+            <mesh
+              geometry={nodes.Cube004_1.geometry}
+              material={materials.pupil}
+            />
+          </group>
+          <group
+            position={[-0.706, 0, 1]}
+            rotation={[Math.PI, 0, Math.PI]}
+            scale={[0.429, 0.429, 0.078]}
+          >
+            <mesh geometry={nodes.Cube012.geometry} material={materials.eye} />
+            <mesh
+              geometry={nodes.Cube012_1.geometry}
+              material={materials.pupil}
+            />
+          </group>
         </group>
       </group>
     </group>

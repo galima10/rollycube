@@ -31,8 +31,9 @@ export default function GameScene() {
   const { buckets } = useBucket(gameInfos);
 
   const { rollRolly } = useRoll(gameInfos, {
-    rollyRef: refs.rolly.rollyBoardRef,
+    visualRef: refs.rolly.rollyVisualRef,
     pivotRef: refs.rolly.rollyPivotRef,
+    rollyRef: refs.rolly.rollyBoardRef,
   });
 
   return (
@@ -60,13 +61,15 @@ export default function GameScene() {
         }}
       />
       <Environment preset="warehouse" />
-      <group ref={refs.board.boardRef} dispose={null}>
+      <group ref={refs.board.boardRef}>
         <RollyModel
           scale={[0.5, 0.5, 0.5]}
+          rotation={[0, 0, Math.PI / 2]}
           paintColor={gameInfos.current.rolly.color}
           position={[gameInfos.current.start.positionX, 0.6, 0]}
           rollyPivotRef={refs.rolly.rollyPivotRef}
           rollyRef={refs.rolly.rollyBoardRef}
+          rollyVisualRef={refs.rolly.rollyVisualRef}
           paintRef={refs.rolly.paintRollyBoardRef}
           rolly={{
             animations: {
@@ -93,7 +96,6 @@ export default function GameScene() {
         scale={[0.5, 0.5, 0.5]}
         paintColor={gameInfos.current.rolly.color}
         position={[gameInfos.current.start.positionX, 0.6, 0]}
-        // rotation={[Math.PI / 4, 0, 0]}
         rollyRef={refs.rolly.rollyWorldRef}
         paintRef={refs.rolly.paintRollyWorldRef}
         rolly={{

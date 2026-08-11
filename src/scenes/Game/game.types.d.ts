@@ -37,4 +37,4 @@ export interface GameInfos {
   start: StartType;
 }
 
-type AxisType = "x" | "z" | null;
+export type AxisType = "x" | "z" | null;

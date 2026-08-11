@@ -39,7 +39,7 @@ export default function BoardModel({
     board.animations.returnBoard(delta);
   });
   return (
-    <group dispose={null} rotation={[0, 0, 0]}>
+    <group rotation={[0, 0, 0]}>
       <Tiles
         hoverTile={hoverTile}
         tileRefs={tileRefs}
