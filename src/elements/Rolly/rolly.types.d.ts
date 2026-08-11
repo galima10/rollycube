@@ -1,4 +1,4 @@
-import type { Mesh, MeshStandardMaterial, Vector3 } from "three";
+import type { Mesh, MeshStandardMaterial, Vector3, Quaternion } from "three";
 import type { PlaceType } from "@/scenes/Game/game.types";
 
 export type RollyGLTFResult = GLTF & {
@@ -22,12 +22,18 @@ export interface RollyType {
   isDragging: boolean;
   isFalling: boolean;
   actualPlace: PlaceType;
-  rotation: {
-    x: number;
-    z: number;
-  };
+  // rotation: {
+  //   x: number;
+  //   z: number;
+  // };
+  quaternion: Quaternion | null;
   isRolling: boolean;
-  edgeCenters: Vector3[];
+  edgeCenters: {
+    forward: Vector3 | null;
+    backward: Vector3 | null;
+    left: Vector3 | null;
+    right: Vector3 | null;
+  };
 }
 
 export interface RollyDragState {

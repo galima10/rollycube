@@ -64,7 +64,7 @@ export default function GameScene() {
       <group ref={refs.board.boardRef}>
         <RollyModel
           scale={[0.5, 0.5, 0.5]}
-          rotation={[0, 0, Math.PI / 2]}
+          // rotation={[0, 0, Math.PI / 2]}
           paintColor={gameInfos.current.rolly.color}
           position={[gameInfos.current.start.positionX, 0.6, 0]}
           rollyPivotRef={refs.rolly.rollyPivotRef}

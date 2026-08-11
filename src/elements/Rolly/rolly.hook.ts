@@ -73,7 +73,12 @@ export function useRolly(
     };
     gameInfos.current.rolly.isDragging = true;
     gameInfos.current.grabbing = "rolly";
-    gameInfos.current.rolly.edgeCenters = [];
+    gameInfos.current.rolly.edgeCenters = {
+      backward: null,
+      forward: null,
+      left: null,
+      right: null,
+    };
   }
 
   function pointerUp(
@@ -161,22 +166,12 @@ export function useRolly(
 
   function getEdgeCenters() {
     const { x, y, z } = rollyBoardRef.current.position;
-    const edgeCenters = [
-      new Vector3(x, y - 1, z - 1),
-      new Vector3(x, y - 1, z + 1),
-      new Vector3(x - 1, y - 1, z),
-      new Vector3(x + 1, y - 1, z),
-    ];
-    // const edgeCenters = [
-    //   new Vector3(0, -1, -1), // arrière
-    //   new Vector3(0, -1, 1), // avant
-    //   new Vector3(-1, -1, 0), // gauche
-    //   new Vector3(1, -1, 0), // droite
-    // ];
-
-    // const worldEdgeCenters = edgeCenters.map((v) =>
-    //   v.clone().applyMatrix4(rollyBoardRef.current.matrixWorld),
-    // );
+    const edgeCenters = {
+      forward: new Vector3(0, -1, -1),
+      backward: new Vector3(0, -1, 1),
+      left: new Vector3(-1, -1, 0),
+      right: new Vector3(1, -1, 0),
+    };
 
     gameInfos.current.rolly.edgeCenters = edgeCenters;
   }

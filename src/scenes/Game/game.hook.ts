@@ -20,12 +20,18 @@ export function useGame() {
         type: "start",
         id: null,
       },
-      rotation: {
-        x: 0,
-        z: 0,
-      },
+      // rotation: {
+      //   x: 0,
+      //   z: 0,
+      // },
+      quaternion: null,
       isRolling: false,
-      edgeCenters: [],
+      edgeCenters: {
+        forward: null,
+        backward: null,
+        left: null,
+        right: null,
+      },
     },
     buckets: {
       positionX: 12 / 2 + 4,
