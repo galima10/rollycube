@@ -30,7 +30,10 @@ export default function GameScene() {
   const { start } = useStart(gameInfos);
   const { buckets } = useBucket(gameInfos);
 
-  const { rollRolly } = useRoll(gameInfos);
+  const { rollRolly } = useRoll(gameInfos, {
+    rollyRef: refs.rolly.rollyBoardRef,
+    pivotRef: refs.rolly.rollyPivotRef,
+  });
 
   return (
     <Canvas
@@ -62,6 +65,7 @@ export default function GameScene() {
           scale={[0.5, 0.5, 0.5]}
           paintColor={gameInfos.current.rolly.color}
           position={[gameInfos.current.start.positionX, 0.6, 0]}
+          rollyPivotRef={refs.rolly.rollyPivotRef}
           rollyRef={refs.rolly.rollyBoardRef}
           paintRef={refs.rolly.paintRollyBoardRef}
           rolly={{
@@ -89,6 +93,7 @@ export default function GameScene() {
         scale={[0.5, 0.5, 0.5]}
         paintColor={gameInfos.current.rolly.color}
         position={[gameInfos.current.start.positionX, 0.6, 0]}
+        // rotation={[Math.PI / 4, 0, 0]}
         rollyRef={refs.rolly.rollyWorldRef}
         paintRef={refs.rolly.paintRollyWorldRef}
         rolly={{
@@ -99,7 +104,11 @@ export default function GameScene() {
         }}
       />
       <StartModel position={[0, 4, 0]} gameInfos={gameInfos} start={start} />
-      <BucketsModel gameInfos={gameInfos} buckets={buckets} bucketsPaintRefs={refs.buckets.bucketsPaintRefs} />
+      <BucketsModel
+        gameInfos={gameInfos}
+        buckets={buckets}
+        bucketsPaintRefs={refs.buckets.bucketsPaintRefs}
+      />
     </Canvas>
   );
 }

@@ -3,22 +3,13 @@ import { useRef, type RefObject } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import {
   type Group,
-  type Vector3Tuple,
   MathUtils,
   Vector3,
   type Mesh,
   MeshStandardMaterial,
 } from "three";
-import type { TileInfosType } from "../Board/board.types";
+import type { RollyDragState } from "./rolly.types";
 import { setColor } from "@/scenes/Game/set-color.utils";
-
-interface RollyDragState {
-  targetPlace: {
-    id: number | null;
-    infos: TileInfosType | null;
-  };
-  targetPosition: Vector3Tuple | null;
-}
 
 export function useRolly(
   gameInfos: RefObject<GameInfos>,
@@ -30,7 +21,13 @@ export function useRolly(
     tileRefs: RefObject<Map<number, Mesh>>;
   },
 ) {
-  const { rollyBoardRef, rollyWorldRef, paintRollyBoardRef, paintRollyWorldRef, tileRefs } = refs;
+  const {
+    rollyBoardRef,
+    rollyWorldRef,
+    paintRollyBoardRef,
+    paintRollyWorldRef,
+    tileRefs,
+  } = refs;
 
   const worldPosition = new Vector3();
 

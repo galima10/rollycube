@@ -20,6 +20,11 @@ export function useGame() {
         type: "start",
         id: null,
       },
+      rotation: {
+        x: 0,
+        z: 0,
+      },
+      isRolling: false,
     },
     buckets: {
       positionX: 12 / 2 + 4,

@@ -2,16 +2,7 @@ import type { GameInfos } from "@/scenes/Game/game.types";
 import { useRef, type RefObject } from "react";
 import { type Group, MathUtils, type Mesh, MeshStandardMaterial } from "three";
 import type { ThreeEvent } from "@react-three/fiber";
-
-interface BoardDragState {
-  clientY: number;
-  startClientY: number;
-  borderId: number;
-  boardRotation: {
-    x: number;
-    z: number;
-  };
-}
+import type { BoardDragState } from "./board.types";
 
 export function useBoard(
   gameInfos: RefObject<GameInfos>,

@@ -22,4 +22,19 @@ export interface RollyType {
   isDragging: boolean;
   isFalling: boolean;
   actualPlace: PlaceType;
+  rotation: {
+    x: number;
+    z: number;
+  };
+  isRolling: boolean;
 }
+
+export interface RollyDragState {
+  targetPlace: {
+    id: number | null;
+    infos: TileInfosType | null;
+  };
+  targetPosition: Vector3Tuple | null;
+}
+
+export type RollDirection = "left" | "right" | "forward" | "backward";

@@ -14,6 +14,7 @@ type RollyModelProps = ThreeElements["group"] & {
   paintColor: string;
   rollyRef: RefObject<Group>;
   paintRef: RefObject<Mesh>;
+  rollyPivotRef?: RefObject<Group>;
   rolly: {
     animations: {
       dragRolly?: (delta: number) => void;
@@ -33,6 +34,7 @@ export default function RollyModel({
   paintColor,
   rollyRef,
   paintRef,
+  rollyPivotRef,
   rolly,
   ...props
 }: RollyModelProps) {
@@ -50,7 +52,7 @@ export default function RollyModel({
     setColor(paintColor, paintRef.current);
   }, []);
   return (
-    <group>
+    <group ref={rollyPivotRef}>
       <group
         {...props}
         dispose={null}
@@ -62,9 +64,9 @@ export default function RollyModel({
         <mesh
           ref={paintRef}
           geometry={nodes.Body.geometry}
-          rotation={[Math.PI, 0, Math.PI]}>
-            <meshStandardMaterial />
-          </mesh>
+        >
+          <meshStandardMaterial />
+        </mesh>
         <group
           position={[0.706, 0, 1]}
           rotation={[Math.PI, 0, Math.PI]}

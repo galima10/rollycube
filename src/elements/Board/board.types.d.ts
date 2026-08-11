@@ -29,3 +29,13 @@ export interface BoardType {
   };
   defaultTileColor: string;
 }
+
+export interface BoardDragState {
+  clientY: number;
+  startClientY: number;
+  borderId: number;
+  boardRotation: {
+    x: number;
+    z: number;
+  };
+}
