@@ -73,12 +73,6 @@ export function useRolly(
     };
     gameInfos.current.rolly.isDragging = true;
     gameInfos.current.grabbing = "rolly";
-    gameInfos.current.rolly.edgeCenters = {
-      backward: null,
-      forward: null,
-      left: null,
-      right: null,
-    };
   }
 
   function pointerUp(
@@ -164,17 +158,30 @@ export function useRolly(
     rollySnapped(targetX, targetY, targetZ);
   }
 
-  function getEdgeCenters() {
-    const { x, y, z } = rollyBoardRef.current.position;
-    const edgeCenters = {
-      forward: new Vector3(0, -1, -1),
-      backward: new Vector3(0, -1, 1),
-      left: new Vector3(-1, -1, 0),
-      right: new Vector3(1, -1, 0),
-    };
+  function colorTile(tileId: number) {
+    const newColor = gameInfos.current.rolly.color;
+    gameInfos.current.board.tiles.grid[tileId].color = newColor;
 
-    gameInfos.current.rolly.edgeCenters = edgeCenters;
+    const tileMesh = tileRefs.current.get(tileId);
+    if (tileMesh) {
+      const material = tileMesh.material;
+
+      if (material instanceof MeshStandardMaterial) {
+        material.color.set(newColor);
+      }
+    }
   }
+
+  // function getEdgeCenters() {
+  //   const edgeCenters = {
+  //     forward: new Vector3(0, -1, -1),
+  //     backward: new Vector3(0, -1, 1),
+  //     left: new Vector3(-1, -1, 0),
+  //     right: new Vector3(1, -1, 0),
+  //   };
+
+  //   gameInfos.current.rolly.edgeCenters = edgeCenters;
+  // }
 
   function rollySnapped(targetX: number, targetY: number, targetZ: number) {
     const distance = Math.sqrt(
@@ -188,26 +195,15 @@ export function useRolly(
     rollyBoardRef.current.position.set(targetX, targetY, targetZ);
 
     rollyDrag.current.targetPosition = null;
+    // getEdgeCenters();
 
     if (gameInfos.current.placeHovered.type === "board") {
-      const newColor = gameInfos.current.rolly.color;
       const tileId = rollyDrag.current.targetPlace.id;
-      gameInfos.current.board.tiles.grid[tileId].color = newColor;
       gameInfos.current.rolly.actualPlace = {
         type: "board",
         id: tileId,
       };
-
-      const tileMesh = tileRefs.current.get(tileId);
-      if (tileMesh) {
-        const material = tileMesh.material;
-
-        if (material instanceof MeshStandardMaterial) {
-          material.color.set(newColor);
-        }
-      }
-
-      getEdgeCenters();
+      colorTile(tileId);
     } else if (gameInfos.current.placeHovered.type === "start") {
       gameInfos.current.rolly.actualPlace = {
         type: "start",

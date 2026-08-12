@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import type { GameInfos } from "./game.types";
 import { createBoard } from "@/elements/Board/create-board.utils";
 import type { Group, Mesh } from "three";
+import { Vector3 } from "three";
 
 export function useGame() {
   const gameInfos = useRef<GameInfos>({
@@ -20,17 +21,23 @@ export function useGame() {
         type: "start",
         id: null,
       },
-      // rotation: {
-      //   x: 0,
-      //   z: 0,
-      // },
-      quaternion: null,
+      rotation: {
+        x: 0,
+        z: 0,
+      },
+      // quaternion: null,
       isRolling: false,
+      // edgeCenters: {
+      //   forward: null,
+      //   backward: null,
+      //   left: null,
+      //   right: null,
+      // },
       edgeCenters: {
-        forward: null,
-        backward: null,
-        left: null,
-        right: null,
+        forward: new Vector3(0, -1, -1),
+        backward: new Vector3(0, -1, 1),
+        left: new Vector3(-1, -1, 0),
+        right: new Vector3(1, -1, 0),
       },
     },
     buckets: {
