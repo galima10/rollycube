@@ -43,15 +43,28 @@ export function useRolly(
   function syncRollyWorldToRollyBoard() {
     if (!rollyBoardRef.current || !rollyWorldRef.current) return;
     if (
+      gameInfos.current.rolly.actualPlace.type === "void" &&
+      !gameInfos.current.rolly.isFalling
+    ) {
+      rollyBoardRef.current.visible = true;
+      rollyWorldRef.current.visible = false;
+      rollyBoardRef.current.getWorldPosition(worldPosition);
+      rollyWorldRef.current.position.copy(worldPosition);
+      return;
+    }
+    if (
       (gameInfos.current.rolly.actualPlace.type === "start" &&
         rollyBoardRef.current.position.y === 0.6) ||
       (gameInfos.current.rolly.actualPlace.type === "bucket" &&
-        rollyBoardRef.current.position.y === 1)
+        rollyBoardRef.current.position.y === 1) ||
+      (gameInfos.current.rolly.actualPlace.type === "void" &&
+        gameInfos.current.rolly.isFalling)
     ) {
       rollyBoardRef.current.visible = false;
       rollyWorldRef.current.visible = true;
       return;
     }
+
     rollyBoardRef.current.visible = true;
     rollyWorldRef.current.visible = false;
 
@@ -59,11 +72,35 @@ export function useRolly(
     rollyWorldRef.current.position.copy(worldPosition);
   }
 
+  function backToStart() {
+    if (!gameInfos.current.rolly.isWaintingForReset) return;
+    console.log("reset");
+    gameInfos.current.rolly.actualPlace = {
+      type: "start",
+      id: null,
+    };
+    gameInfos.current.rolly.isFalling = false;
+
+    rollyWorldRef.current.position.set(
+      gameInfos.current.start.positionX,
+      0.6,
+      0,
+    );
+    rollyWorldRef.current.rotation.set(0, 0, 0);
+    rollyBoardRef.current.rotation.set(0, 0, 0);
+
+    gameInfos.current.rolly.isWaintingForReset = false;
+  }
+
   function handlePointerDown(e: ThreeEvent<PointerEvent>) {
     if (e.button !== 0) return;
-    if (gameInfos.current.rolly.isDragging || gameInfos.current.rolly.isFalling)
+    if (
+      gameInfos.current.rolly.isDragging ||
+      gameInfos.current.rolly.isUnGrabbing
+    )
       return;
     if (gameInfos.current.board.isLeaning) return;
+    if (gameInfos.current.rolly.actualPlace.type === "void") return;
     e.stopPropagation();
     document.body.style.cursor = "grabbing";
 
@@ -92,7 +129,7 @@ export function useRolly(
       };
 
     gameInfos.current.rolly.isDragging = false;
-    gameInfos.current.rolly.isFalling = true;
+    gameInfos.current.rolly.isUnGrabbing = true;
     gameInfos.current.grabbing = null;
   }
 
@@ -136,6 +173,7 @@ export function useRolly(
   }
 
   function handlePointerEnter(e: ThreeEvent<PointerEvent>) {
+    if (gameInfos.current.rolly.actualPlace.type === "void") return;
     e.stopPropagation();
     document.body.style.cursor = "grab";
   }
@@ -158,20 +196,6 @@ export function useRolly(
 
     rollySnapped(targetX, targetY, targetZ);
   }
-
-  // function colorTile(tileId: number) {
-  //   const newColor = gameInfos.current.rolly.color;
-  //   gameInfos.current.board.tiles.grid[tileId].color = newColor;
-
-  //   const tileMesh = tileRefs.current.get(tileId);
-  //   if (tileMesh) {
-  //     const material = tileMesh.material;
-
-  //     if (material instanceof MeshStandardMaterial) {
-  //       material.color.set(newColor);
-  //     }
-  //   }
-  // }
 
   function rollySnapped(targetX: number, targetY: number, targetZ: number) {
     const distance = Math.sqrt(
@@ -211,7 +235,7 @@ export function useRolly(
       setColor(newColor, paintRollyBoardRef.current);
       setColor(newColor, paintRollyWorldRef.current);
     }
-    gameInfos.current.rolly.isFalling = false;
+    gameInfos.current.rolly.isUnGrabbing = false;
   }
 
   function dragRolly(delta: number) {
@@ -311,6 +335,7 @@ export function useRolly(
         dragRolly,
         snapRolly,
         syncRollyWorldToRollyBoard,
+        backToStart,
       },
       interactions: {
         handlePointerDown,

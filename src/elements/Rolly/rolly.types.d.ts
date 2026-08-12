@@ -20,8 +20,10 @@ export interface RollyType {
     z: number;
   };
   isDragging: boolean;
+  isUnGrabbing: boolean;
   isFalling: boolean;
   actualPlace: PlaceType;
+  isWaintingForReset: boolean;
   rotation: {
     x: number;
     z: number;

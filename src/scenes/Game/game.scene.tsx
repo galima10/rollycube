@@ -30,11 +30,12 @@ export default function GameScene() {
   const { start } = useStart(gameInfos);
   const { buckets } = useBucket(gameInfos);
 
-  const { rollRolly } = useRoll(gameInfos, {
+  const { rollRolly, fallRolly } = useRoll(gameInfos, {
     visualBoardRef: refs.rolly.rollyBoardVisualRef,
     visualWorldRef: refs.rolly.rollyWorldVisualRef,
     pivotRef: refs.rolly.rollyPivotRef,
-    rollyRef: refs.rolly.rollyBoardRef,
+    rollyBoardRef: refs.rolly.rollyBoardRef,
+    rollyWorldRef: refs.rolly.rollyWorldRef,
     tileRefs: refs.board.tileRefs,
   });
 
@@ -77,8 +78,7 @@ export default function GameScene() {
               rollRolly: rollRolly,
               snapRolly: rolly.animations.snapRolly,
               dragRolly: rolly.animations.dragRolly,
-              syncRollyWorldToRollyBoard:
-                rolly.animations.syncRollyWorldToRollyBoard,
+              backToStart: rolly.animations.backToStart
             },
             interactions: rolly.interactions,
           }}
@@ -104,6 +104,7 @@ export default function GameScene() {
           animations: {
             syncRollyWorldToRollyBoard:
               rolly.animations.syncRollyWorldToRollyBoard,
+            fallRolly,
           },
         }}
       />

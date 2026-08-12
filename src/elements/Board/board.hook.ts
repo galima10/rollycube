@@ -104,12 +104,10 @@ export function useBoard(
   }
 
   function handlePointerUp() {
-    if (
-      gameInfos.current.rolly.isDragging ||
-      gameInfos.current.rolly.isFalling
-    ) {
+    if (gameInfos.current.rolly.isDragging) {
       return;
     }
+
     document.body.style.cursor = "default";
 
     gameInfos.current.board.borders = Object.fromEntries(

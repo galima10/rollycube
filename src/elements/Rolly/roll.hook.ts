@@ -26,6 +26,7 @@ interface RollState {
     x: number | null;
     z: number | null;
   };
+  rollSpeed: number;
 }
 
 export function useRoll(
@@ -34,11 +35,19 @@ export function useRoll(
     pivotRef: RefObject<Group>;
     visualBoardRef: RefObject<Group>;
     visualWorldRef: RefObject<Group>;
-    rollyRef: RefObject<Group>;
+    rollyBoardRef: RefObject<Group>;
+    rollyWorldRef: RefObject<Group>;
     tileRefs: RefObject<Map<number, Mesh>>;
   },
 ) {
-  const { visualBoardRef, visualWorldRef, pivotRef, rollyRef, tileRefs } = refs;
+  const {
+    visualBoardRef,
+    visualWorldRef,
+    pivotRef,
+    rollyBoardRef,
+    rollyWorldRef,
+    tileRefs,
+  } = refs;
   const rollState = useRef<RollState>({
     isAnimating: false,
     canStartAnimation: true,
@@ -53,17 +62,23 @@ export function useRoll(
       x: null,
       z: null,
     },
+    rollSpeed: 0,
   });
+  const velocityY = useRef(0);
+  const velocityOut = useRef(0);
 
-  function getActualTile() {
+  function getTileAtPosition(x: number, z: number): number | null {
     const tiles = gameInfos.current.board.tiles.grid;
-    const tileId =
-      Object.keys(tiles).find(
-        (tileId) =>
-          tiles[tileId].position.x === rollyRef.current.position.x &&
-          tiles[tileId].position.z === rollyRef.current.position.z,
-      ) ?? null;
-    return tileId ? Number(tileId) : null;
+
+    const EPSILON = 0.001;
+
+    const tileId = Object.entries(tiles).find(
+      ([, tile]) =>
+        Math.abs(tile.position.x - x) < EPSILON &&
+        Math.abs(tile.position.z - z) < EPSILON,
+    )?.[0];
+
+    return tileId !== undefined ? Number(tileId) : null;
   }
 
   function canRoll(axis: AxisType, rotation: { x: number; z: number }) {
@@ -117,8 +132,19 @@ export function useRoll(
     rollState.current.direction = direction;
     setTargetRotation();
     setPivot();
+    rollState.current.tileId = getTargetTileId();
     rollState.current.canStartAnimation = false;
     rollState.current.isAnimating = true;
+  }
+
+  function getTargetTileId(): number | null {
+    const { x, z } = rollState.current.targetPosition;
+
+    if (x === null || z === null) {
+      return null;
+    }
+
+    return getTileAtPosition(x, z);
   }
 
   function rotateRolly(target: number, speed: number, delta: number) {
@@ -139,16 +165,84 @@ export function useRoll(
     }
   }
 
+  function fallRolly(delta: number) {
+    if (!rollState.current.direction) return;
+    if (gameInfos.current.rolly.actualPlace.type !== "void") return;
+
+    const distanceFromBoard = gameInfos.current.board.boardSize / 2 + 2;
+
+    const axis =
+      rollState.current.direction === "forward" ||
+      rollState.current.direction === "backward"
+        ? "z"
+        : "x";
+
+    const isNegative =
+      rollState.current.direction === "forward" ||
+      rollState.current.direction === "left";
+
+    const direction = isNegative ? -1 : 1;
+
+    // Sortie du plateau
+    const target = distanceFromBoard * direction;
+
+    // Accélération vers l'extérieur
+    const acceleration = 100;
+    const maxOutSpeed = 70;
+
+    // Le mouvement horizontal + la chute commencent ensemble
+
+    // Sortie du plateau
+    velocityOut.current = Math.min(
+      velocityOut.current + acceleration * delta,
+      maxOutSpeed,
+    );
+
+    rollyBoardRef.current.position[axis] +=
+      direction * velocityOut.current * delta;
+
+    rollyBoardRef.current.rotation[rollState.current.axis] +=
+      (delta * rollState.current.rollSpeed) / 10;
+
+    // Récupère son orientation globale
+    rollyBoardRef.current.getWorldQuaternion(rollyWorldRef.current.quaternion);
+
+    // Ne jamais dépasser la distance voulue
+    if (
+      (direction === 1 && rollyBoardRef.current.position[axis] >= target) ||
+      (direction === -1 && rollyBoardRef.current.position[axis] <= target)
+    ) {
+      rollyBoardRef.current.position[axis] = target;
+      velocityOut.current = 0;
+      gameInfos.current.rolly.isFalling = true;
+    }
+
+    // Chute en parallèle
+    velocityY.current -= 9.81 * delta * 10;
+    rollyWorldRef.current.position.y += velocityY.current * delta;
+
+    // Limite de chute
+    if (rollyWorldRef.current.position.y <= -80) {
+      rollyWorldRef.current.position.y = -80;
+      velocityY.current = 0;
+      velocityOut.current = 0;
+      gameInfos.current.rolly.isWaintingForReset = true;
+      console.log("fin")
+    }
+  }
+
   function rollingRolly(delta: number) {
     if (!rollState.current.isAnimating) return;
     if (!rollState.current.axis || !rollState.current.direction) return;
-    const speed = getRollSpeed();
+    rollState.current.rollSpeed = getRollSpeed();
 
     const target = rollState.current.targetRotation;
     const axis = rollState.current.axis;
 
-    if (axis === "x" && target.x !== null) rotateRolly(target.x, speed, delta);
-    if (axis === "z" && target.z !== null) rotateRolly(target.z, speed, delta);
+    if (axis === "x" && target.x !== null)
+      rotateRolly(target.x, rollState.current.rollSpeed, delta);
+    if (axis === "z" && target.z !== null)
+      rotateRolly(target.z, rollState.current.rollSpeed, delta);
   }
 
   function finishRolling() {
@@ -157,9 +251,9 @@ export function useRoll(
 
     applyFinalRotation();
     resetPivot();
+    highlightCurrentTile();
     applyFinalPosition();
     resetRollState();
-    highlightCurrentTile();
   }
 
   function applyFinalRotation() {
@@ -180,15 +274,15 @@ export function useRoll(
   function applyFinalPosition() {
     const { targetPosition } = rollState.current;
 
-    rollyRef.current.position.x = targetPosition.x;
-    rollyRef.current.position.z = targetPosition.z;
+    rollyBoardRef.current.position.x = targetPosition.x;
+    rollyBoardRef.current.position.z = targetPosition.z;
 
     visualBoardRef.current.position.set(0, 0, 0);
 
     gameInfos.current.rolly.position = {
-      x: rollyRef.current.position.x,
-      y: rollyRef.current.position.y,
-      z: rollyRef.current.position.z,
+      x: rollyBoardRef.current.position.x,
+      y: rollyBoardRef.current.position.y,
+      z: rollyBoardRef.current.position.z,
     };
   }
 
@@ -197,8 +291,6 @@ export function useRoll(
 
     rollState.current.isAnimating = false;
     rollState.current.canStartAnimation = true;
-    rollState.current.axis = null;
-    rollState.current.direction = null;
 
     rollState.current.targetRotation.x = null;
     rollState.current.targetRotation.z = null;
@@ -208,11 +300,20 @@ export function useRoll(
   }
 
   function highlightCurrentTile() {
-    const tileId = getActualTile();
-    rollState.current.tileId = tileId;
+    const tileId = rollState.current.tileId;
 
-    if (!tileId) return;
-    colorTile(tileId, tileRefs, gameInfos);
+    if (tileId) {
+      colorTile(tileId, tileRefs, gameInfos);
+      gameInfos.current.rolly.actualPlace = {
+        type: "board",
+        id: rollState.current.tileId,
+      };
+    } else {
+      gameInfos.current.rolly.actualPlace = {
+        type: "void",
+        id: null,
+      };
+    }
   }
 
   function createTargetRotation(direction: RollDirection) {
@@ -273,25 +374,6 @@ export function useRoll(
     gameInfos.current.rolly.isRolling = true;
   }
 
-  function replacePivot() {
-    visualBoardRef.current.rotation.x = gameInfos.current.rolly.rotation.x;
-    visualBoardRef.current.rotation.z = gameInfos.current.rolly.rotation.z;
-    visualWorldRef.current.rotation.x = gameInfos.current.rolly.rotation.x;
-    visualWorldRef.current.rotation.z = gameInfos.current.rolly.rotation.z;
-
-    pivotRef.current.rotation.x = 0;
-    pivotRef.current.rotation.z = 0;
-
-    rollyRef.current.position.x = rollState.current.targetPosition.x;
-    rollyRef.current.position.z = rollState.current.targetPosition.z;
-    pivotRef.current.position.x = 0;
-    pivotRef.current.position.y = 0;
-    pivotRef.current.position.z = 0;
-    visualBoardRef.current.position.x = 0;
-    visualBoardRef.current.position.y = 0;
-    visualBoardRef.current.position.z = 0;
-  }
-
   function setPivot() {
     if (!rollState.current.direction) return;
 
@@ -324,5 +406,5 @@ export function useRoll(
       offsetZ: gameInfos.current.rolly.edgeCenters[direction].z,
     };
   }
-  return { rollRolly };
+  return { rollRolly, fallRolly };
 }

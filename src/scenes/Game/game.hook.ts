@@ -15,8 +15,10 @@ export function useGame() {
         y: 0,
         z: 0,
       },
-      isDragging: false,
       isFalling: false,
+      isDragging: false,
+      isUnGrabbing: false,
+      isWaintingForReset: false,
       actualPlace: {
         type: "start",
         id: null,
@@ -25,14 +27,7 @@ export function useGame() {
         x: 0,
         z: 0,
       },
-      // quaternion: null,
       isRolling: false,
-      // edgeCenters: {
-      //   forward: null,
-      //   backward: null,
-      //   left: null,
-      //   right: null,
-      // },
       edgeCenters: {
         forward: new Vector3(0, -1, -1),
         backward: new Vector3(0, -1, 1),
