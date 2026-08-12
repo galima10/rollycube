@@ -80,7 +80,8 @@ export function useGame() {
   const paintRollyBoardRef = useRef<Mesh>(null);
   const paintRollyWorldRef = useRef<Mesh>(null);
   const rollyPivotRef = useRef<Group>(null);
-  const rollyVisualRef = useRef<Group>(null);
+  const rollyBoardVisualRef = useRef<Group>(null);
+  const rollyWorldVisualRef = useRef<Group>(null);
 
   const boardRef = useRef<Group>(null);
   const tileRefs = useRef<Map<number, Mesh>>(new Map());
@@ -96,7 +97,8 @@ export function useGame() {
         rollyPivotRef,
         paintRollyBoardRef,
         paintRollyWorldRef,
-        rollyVisualRef,
+        rollyBoardVisualRef,
+        rollyWorldVisualRef,
       },
       board: {
         boardRef,

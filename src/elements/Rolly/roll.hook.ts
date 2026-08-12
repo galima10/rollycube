@@ -5,17 +5,19 @@ import {
   type Group,
   MathUtils,
   Vector3,
+  type Mesh,
   Quaternion,
   type Vector3Tuple,
 } from "three";
 import type { AxisType } from "@/scenes/Game/game.types";
+import { colorTile } from "../Board/color-tile.utils";
 
 interface RollState {
   isAnimating: boolean;
   axis: AxisType | null;
   direction: RollDirection | null;
   canStartAnimation: boolean;
-  // targetQuaternion: Quaternion | null;
+  tileId: number | null;
   targetRotation: {
     x: number | null;
     z: number | null;
@@ -30,16 +32,19 @@ export function useRoll(
   gameInfos: RefObject<GameInfos>,
   refs: {
     pivotRef: RefObject<Group>;
-    visualRef: RefObject<Group>;
+    visualBoardRef: RefObject<Group>;
+    visualWorldRef: RefObject<Group>;
     rollyRef: RefObject<Group>;
+    tileRefs: RefObject<Map<number, Mesh>>;
   },
 ) {
-  const { visualRef, pivotRef, rollyRef } = refs;
+  const { visualBoardRef, visualWorldRef, pivotRef, rollyRef, tileRefs } = refs;
   const rollState = useRef<RollState>({
     isAnimating: false,
     canStartAnimation: true,
     axis: null,
     direction: null,
+    tileId: null,
     targetRotation: {
       x: null,
       z: null,
@@ -50,6 +55,17 @@ export function useRoll(
     },
   });
 
+  function getActualTile() {
+    const tiles = gameInfos.current.board.tiles.grid;
+    const tileId =
+      Object.keys(tiles).find(
+        (tileId) =>
+          tiles[tileId].position.x === rollyRef.current.position.x &&
+          tiles[tileId].position.z === rollyRef.current.position.z,
+      ) ?? null;
+    return tileId ? Number(tileId) : null;
+  }
+
   function canRoll(axis: AxisType, rotation: { x: number; z: number }) {
     if (axis === "x") return Math.abs(rotation.x) > 0.3 ? true : false;
     else return Math.abs(rotation.z) > 0.2 ? true : false;
@@ -59,10 +75,10 @@ export function useRoll(
     const board = gameInfos.current.board;
     const axis = board.leanAxis;
 
-      const MIN_ROLL_SPEED = 2;
-      const MAX_ROLL_SPEED = 70;
+    const MIN_ROLL_SPEED = 5;
+    const MAX_ROLL_SPEED = 70;
 
-    if (!axis) return 0;
+    if (!axis) return MIN_ROLL_SPEED;
 
     const angle =
       axis === "x" ? Math.abs(board.rotation.x) : Math.abs(board.rotation.z);
@@ -76,186 +92,181 @@ export function useRoll(
   }
 
   function rollRolly(delta: number) {
-    const game = gameInfos.current;
-    if (game.rolly.actualPlace.type !== "board") return;
-    if (!pivotRef.current) return;
+    if (gameInfos.current.rolly.actualPlace.type !== "board") return;
+    startRolling();
+    rollingRolly(delta);
+  }
 
-    const state = rollState.current;
+  function snapRotation(angle: number) {
+    const quarterTurn = Math.PI / 2;
+    return Math.round(angle / quarterTurn) * quarterTurn;
+  }
 
-    if (game.board.isLeaning && state.canStartAnimation && !state.isAnimating) {
-      const axis = game.board.leanAxis;
-      if (!canRoll(axis, game.board.rotation)) return;
-      const direction = getTargetDirection();
-      if (!axis || !direction) return;
-      state.axis = axis;
-      state.direction = direction;
-      setTargetRotation();
-      setPivot();
-      state.canStartAnimation = false;
-      state.isAnimating = true;
+  function startRolling() {
+    if (
+      !gameInfos.current.board.isLeaning ||
+      !rollState.current.canStartAnimation ||
+      rollState.current.isAnimating
+    )
       return;
-    }
+    const axis = gameInfos.current.board.leanAxis;
+    if (!canRoll(axis, gameInfos.current.board.rotation)) return;
+    const direction = getTargetDirection();
+    if (!axis || !direction) return;
+    rollState.current.axis = axis;
+    rollState.current.direction = direction;
+    setTargetRotation();
+    setPivot();
+    rollState.current.canStartAnimation = false;
+    rollState.current.isAnimating = true;
+  }
 
-    if (state.isAnimating) {
-      rollingRolly(delta, getRollSpeed());
-      return;
+  function rotateRolly(target: number, speed: number, delta: number) {
+    const axis = rollState.current.axis;
+    if (!axis) return;
+    pivotRef.current.rotation[axis] = MathUtils.damp(
+      pivotRef.current.rotation[axis],
+      target,
+      speed,
+      delta,
+    );
+
+    if (Math.abs(pivotRef.current.rotation[axis] - target) < 0.001) {
+      pivotRef.current.rotation[axis] = target;
+      const newRotation = visualBoardRef.current.rotation[axis] + target;
+      gameInfos.current.rolly.rotation[axis] = snapRotation(newRotation);
+      finishRolling();
     }
   }
 
-  function rollingRolly(delta: number, speed: number) {
-    const state = rollState.current;
-    const pivot = pivotRef.current;
+  function rollingRolly(delta: number) {
+    if (!rollState.current.isAnimating) return;
+    if (!rollState.current.axis || !rollState.current.direction) return;
+    const speed = getRollSpeed();
 
-    if (!state.isAnimating) return;
-    if (!state.axis || !state.direction) return;
+    const target = rollState.current.targetRotation;
+    const axis = rollState.current.axis;
 
-    const target = state.targetRotation;
-    const axis = state.axis;
-
-    if (axis === "x" && target.x !== null) {
-      // pivotRef.current.rotation.x = MathUtils.lerp(
-      //   pivotRef.current.rotation.x,
-      //   target.x,
-      //   delta * speed,
-      // );
-
-      pivot.rotation.x = MathUtils.damp(
-        pivot.rotation.x,
-        target.x,
-        speed,
-        delta,
-      );
-
-      if (Math.abs(pivotRef.current.rotation.x - target.x) < 0.001) {
-        pivotRef.current.rotation.x = target.x;
-        gameInfos.current.rolly.rotation = {
-          x: gameInfos.current.rolly.rotation.x + pivotRef.current.rotation.x,
-          z: gameInfos.current.rolly.rotation.z,
-        };
-        finishRolling();
-        return;
-      }
-    }
-
-    if (axis === "z" && target.z !== null) {
-      // pivotRef.current.rotation.z = MathUtils.lerp(
-      //   pivotRef.current.rotation.z,
-      //   target.z,
-      //   delta * speed,
-      // );
-
-      pivot.rotation.z = MathUtils.damp(
-        pivot.rotation.z,
-        target.z,
-        speed,
-        delta,
-      );
-
-      if (Math.abs(pivotRef.current.rotation.z - target.z) < 0.001) {
-        pivotRef.current.rotation.z = target.z;
-        gameInfos.current.rolly.rotation = {
-          x: gameInfos.current.rolly.rotation.x,
-          z: gameInfos.current.rolly.rotation.z + pivotRef.current.rotation.z,
-        };
-        finishRolling();
-        return;
-      }
-    }
-  }
-
-  function snapPosition(axis: AxisType) {
-    if (axis === "x") {
-      rollyRef.current.position.x = rollState.current.targetPosition.x;
-    } else {
-      rollyRef.current.position.z = rollState.current.targetPosition.z;
-    }
+    if (axis === "x" && target.x !== null) rotateRolly(target.x, speed, delta);
+    if (axis === "z" && target.z !== null) rotateRolly(target.z, speed, delta);
   }
 
   function finishRolling() {
-    const state = rollState.current;
-
-    const axis = state.axis;
-
+    const axis = rollState.current.axis;
     if (!axis) return;
 
-    replacePivot();
-    snapPosition(axis);
+    applyFinalRotation();
+    resetPivot();
+    applyFinalPosition();
+    resetRollState();
+    highlightCurrentTile();
+  }
 
-    gameInfos.current.rolly.isRolling = false;
+  function applyFinalRotation() {
+    const rotation = gameInfos.current.rolly.rotation;
 
-    state.isAnimating = false;
-    state.canStartAnimation = true;
-    state.axis = null;
-    state.direction = null;
+    visualBoardRef.current.rotation.x = rotation.x;
+    visualBoardRef.current.rotation.z = rotation.z;
+
+    visualWorldRef.current.rotation.x = rotation.x;
+    visualWorldRef.current.rotation.z = rotation.z;
+  }
+
+  function resetPivot() {
+    pivotRef.current.rotation.set(0, 0, 0);
+    pivotRef.current.position.set(0, 0, 0);
+  }
+
+  function applyFinalPosition() {
+    const { targetPosition } = rollState.current;
+
+    rollyRef.current.position.x = targetPosition.x;
+    rollyRef.current.position.z = targetPosition.z;
+
+    visualBoardRef.current.position.set(0, 0, 0);
 
     gameInfos.current.rolly.position = {
       x: rollyRef.current.position.x,
       y: rollyRef.current.position.y,
       z: rollyRef.current.position.z,
     };
+  }
 
-    state.targetRotation = {
-      x: null,
-      z: null,
-    };
+  function resetRollState() {
+    gameInfos.current.rolly.isRolling = false;
 
-    state.targetPosition = {
-      x: null,
-      z: null,
-    };
+    rollState.current.isAnimating = false;
+    rollState.current.canStartAnimation = true;
+    rollState.current.axis = null;
+    rollState.current.direction = null;
+
+    rollState.current.targetRotation.x = null;
+    rollState.current.targetRotation.z = null;
+
+    rollState.current.targetPosition.x = null;
+    rollState.current.targetPosition.z = null;
+  }
+
+  function highlightCurrentTile() {
+    const tileId = getActualTile();
+    rollState.current.tileId = tileId;
+
+    if (!tileId) return;
+    colorTile(tileId, tileRefs, gameInfos);
   }
 
   function createTargetRotation(direction: RollDirection) {
-    const state = rollState.current;
-
     switch (direction) {
       case "backward":
-        state.targetRotation.x = Math.PI / 2;
+        rollState.current.targetRotation.x = Math.PI / 2;
         break;
 
       case "forward":
-        state.targetRotation.x = -Math.PI / 2;
+        rollState.current.targetRotation.x = -Math.PI / 2;
         break;
 
       case "right":
-        state.targetRotation.z = -Math.PI / 2;
+        rollState.current.targetRotation.z = -Math.PI / 2;
         break;
 
       case "left":
-        state.targetRotation.z = Math.PI / 2;
+        rollState.current.targetRotation.z = Math.PI / 2;
         break;
     }
   }
 
   function setTargetRotation() {
-    const state = rollState.current;
-    if (state.isAnimating) return;
+    if (rollState.current.isAnimating) return;
 
-    const direction = state.direction;
+    const direction = rollState.current.direction;
 
     switch (direction) {
       case "backward":
         createTargetRotation(direction);
-        state.targetPosition.z = gameInfos.current.rolly.position.z + 1;
-        state.targetPosition.x = gameInfos.current.rolly.position.x;
+        rollState.current.targetPosition.z =
+          gameInfos.current.rolly.position.z + 1;
+        rollState.current.targetPosition.x = gameInfos.current.rolly.position.x;
         break;
 
       case "forward":
         createTargetRotation(direction);
-        state.targetPosition.z = gameInfos.current.rolly.position.z - 1;
-        state.targetPosition.x = gameInfos.current.rolly.position.x;
+        rollState.current.targetPosition.z =
+          gameInfos.current.rolly.position.z - 1;
+        rollState.current.targetPosition.x = gameInfos.current.rolly.position.x;
         break;
 
       case "right":
         createTargetRotation(direction);
-        state.targetPosition.x = gameInfos.current.rolly.position.x + 1;
-        state.targetPosition.z = gameInfos.current.rolly.position.z;
+        rollState.current.targetPosition.x =
+          gameInfos.current.rolly.position.x + 1;
+        rollState.current.targetPosition.z = gameInfos.current.rolly.position.z;
         break;
 
       case "left":
         createTargetRotation(direction);
-        state.targetPosition.x = gameInfos.current.rolly.position.x - 1;
-        state.targetPosition.z = gameInfos.current.rolly.position.z;
+        rollState.current.targetPosition.x =
+          gameInfos.current.rolly.position.x - 1;
+        rollState.current.targetPosition.z = gameInfos.current.rolly.position.z;
         break;
     }
 
@@ -263,41 +274,37 @@ export function useRoll(
   }
 
   function replacePivot() {
-    const pivot = pivotRef.current;
-    const visual = visualRef.current;
-    const rolly = rollyRef.current;
-    const state = rollState.current;
+    visualBoardRef.current.rotation.x = gameInfos.current.rolly.rotation.x;
+    visualBoardRef.current.rotation.z = gameInfos.current.rolly.rotation.z;
+    visualWorldRef.current.rotation.x = gameInfos.current.rolly.rotation.x;
+    visualWorldRef.current.rotation.z = gameInfos.current.rolly.rotation.z;
 
-    visual.rotation.x = gameInfos.current.rolly.rotation.x;
-    visual.rotation.z = gameInfos.current.rolly.rotation.z;
+    pivotRef.current.rotation.x = 0;
+    pivotRef.current.rotation.z = 0;
 
-    pivot.rotation.x = 0;
-    pivot.rotation.z = 0;
-
-    rolly.position.x = state.targetPosition.x;
-    rolly.position.z = state.targetPosition.z;
-    pivot.position.x = 0;
-    pivot.position.y = 0;
-    pivot.position.z = 0;
-    visual.position.x = 0;
-    visual.position.y = 0;
-    visual.position.z = 0;
+    rollyRef.current.position.x = rollState.current.targetPosition.x;
+    rollyRef.current.position.z = rollState.current.targetPosition.z;
+    pivotRef.current.position.x = 0;
+    pivotRef.current.position.y = 0;
+    pivotRef.current.position.z = 0;
+    visualBoardRef.current.position.x = 0;
+    visualBoardRef.current.position.y = 0;
+    visualBoardRef.current.position.z = 0;
   }
 
   function setPivot() {
-    const state = rollState.current;
-    const pivot = pivotRef.current;
-    const visual = visualRef.current;
+    if (!rollState.current.direction) return;
 
-    if (!state.direction) return;
+    const { offsetX, offsetY, offsetZ } = getPivotOffset(
+      rollState.current.direction,
+    );
 
-    const { offsetX, offsetY, offsetZ } = getPivotOffset(state.direction);
-    pivot.position.x = offsetX;
-    pivot.position.y = offsetY;
-    pivot.position.z = offsetZ;
-    visual.position.x = -offsetX;
-    visual.position.y = -offsetY;
-    visual.position.z = -offsetZ;
+    pivotRef.current.position.x = offsetX;
+    pivotRef.current.position.y = offsetY;
+    pivotRef.current.position.z = offsetZ;
+    visualBoardRef.current.position.x = -offsetX;
+    visualBoardRef.current.position.y = -offsetY;
+    visualBoardRef.current.position.z = -offsetZ;
   }
 
   function getTargetDirection(): RollDirection {
@@ -310,13 +317,11 @@ export function useRoll(
   }
 
   function getPivotOffset(direction: RollDirection) {
-    const game = gameInfos.current;
     if (!direction) return;
-    console.log("test");
     return {
-      offsetX: game.rolly.edgeCenters[direction].x,
-      offsetY: game.rolly.edgeCenters[direction].y,
-      offsetZ: game.rolly.edgeCenters[direction].z,
+      offsetX: gameInfos.current.rolly.edgeCenters[direction].x,
+      offsetY: gameInfos.current.rolly.edgeCenters[direction].y,
+      offsetZ: gameInfos.current.rolly.edgeCenters[direction].z,
     };
   }
   return { rollRolly };

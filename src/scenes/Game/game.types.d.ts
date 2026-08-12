@@ -25,6 +25,10 @@ export type PlaceType =
   | {
       type: null;
       id: null;
+    }
+  | {
+      type: "void";
+      id: null;
     };
 
 export interface GameInfos {

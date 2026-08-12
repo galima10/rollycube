@@ -31,9 +31,11 @@ export default function GameScene() {
   const { buckets } = useBucket(gameInfos);
 
   const { rollRolly } = useRoll(gameInfos, {
-    visualRef: refs.rolly.rollyVisualRef,
+    visualBoardRef: refs.rolly.rollyBoardVisualRef,
+    visualWorldRef: refs.rolly.rollyWorldVisualRef,
     pivotRef: refs.rolly.rollyPivotRef,
     rollyRef: refs.rolly.rollyBoardRef,
+    tileRefs: refs.board.tileRefs,
   });
 
   return (
@@ -64,12 +66,11 @@ export default function GameScene() {
       <group ref={refs.board.boardRef}>
         <RollyModel
           scale={[0.5, 0.5, 0.5]}
-          // rotation={[0, 0, Math.PI / 2]}
           paintColor={gameInfos.current.rolly.color}
           position={[gameInfos.current.start.positionX, 0.6, 0]}
           rollyPivotRef={refs.rolly.rollyPivotRef}
           rollyRef={refs.rolly.rollyBoardRef}
-          rollyVisualRef={refs.rolly.rollyVisualRef}
+          rollyVisualRef={refs.rolly.rollyBoardVisualRef}
           paintRef={refs.rolly.paintRollyBoardRef}
           rolly={{
             animations: {
@@ -98,6 +99,7 @@ export default function GameScene() {
         position={[gameInfos.current.start.positionX, 0.6, 0]}
         rollyRef={refs.rolly.rollyWorldRef}
         paintRef={refs.rolly.paintRollyWorldRef}
+        rollyVisualRef={refs.rolly.rollyWorldVisualRef}
         rolly={{
           animations: {
             syncRollyWorldToRollyBoard:

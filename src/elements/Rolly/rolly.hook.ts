@@ -10,6 +10,7 @@ import {
 } from "three";
 import type { RollyDragState } from "./rolly.types";
 import { setColor } from "@/scenes/Game/set-color.utils";
+import { colorTile } from "../Board/color-tile.utils";
 
 export function useRolly(
   gameInfos: RefObject<GameInfos>,
@@ -158,29 +159,18 @@ export function useRolly(
     rollySnapped(targetX, targetY, targetZ);
   }
 
-  function colorTile(tileId: number) {
-    const newColor = gameInfos.current.rolly.color;
-    gameInfos.current.board.tiles.grid[tileId].color = newColor;
+  // function colorTile(tileId: number) {
+  //   const newColor = gameInfos.current.rolly.color;
+  //   gameInfos.current.board.tiles.grid[tileId].color = newColor;
 
-    const tileMesh = tileRefs.current.get(tileId);
-    if (tileMesh) {
-      const material = tileMesh.material;
+  //   const tileMesh = tileRefs.current.get(tileId);
+  //   if (tileMesh) {
+  //     const material = tileMesh.material;
 
-      if (material instanceof MeshStandardMaterial) {
-        material.color.set(newColor);
-      }
-    }
-  }
-
-  // function getEdgeCenters() {
-  //   const edgeCenters = {
-  //     forward: new Vector3(0, -1, -1),
-  //     backward: new Vector3(0, -1, 1),
-  //     left: new Vector3(-1, -1, 0),
-  //     right: new Vector3(1, -1, 0),
-  //   };
-
-  //   gameInfos.current.rolly.edgeCenters = edgeCenters;
+  //     if (material instanceof MeshStandardMaterial) {
+  //       material.color.set(newColor);
+  //     }
+  //   }
   // }
 
   function rollySnapped(targetX: number, targetY: number, targetZ: number) {
@@ -195,7 +185,6 @@ export function useRolly(
     rollyBoardRef.current.position.set(targetX, targetY, targetZ);
 
     rollyDrag.current.targetPosition = null;
-    // getEdgeCenters();
 
     if (gameInfos.current.placeHovered.type === "board") {
       const tileId = rollyDrag.current.targetPlace.id;
@@ -203,7 +192,7 @@ export function useRolly(
         type: "board",
         id: tileId,
       };
-      colorTile(tileId);
+      colorTile(tileId, tileRefs, gameInfos);
     } else if (gameInfos.current.placeHovered.type === "start") {
       gameInfos.current.rolly.actualPlace = {
         type: "start",
