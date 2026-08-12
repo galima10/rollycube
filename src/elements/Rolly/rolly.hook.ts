@@ -79,6 +79,10 @@ export function useRolly(
       type: "start",
       id: null,
     };
+    gameInfos.current.placeHovered = {
+      type: "start",
+      id: null,
+    };
     gameInfos.current.rolly.isFalling = false;
 
     rollyWorldRef.current.position.set(
@@ -86,8 +90,13 @@ export function useRolly(
       0.6,
       0,
     );
-    rollyWorldRef.current.rotation.set(0, 0, 0);
+    rollyBoardRef.current.position.set(
+      gameInfos.current.start.positionX,
+      0.6,
+      0,
+    );
     rollyBoardRef.current.rotation.set(0, 0, 0);
+    rollyWorldRef.current.rotation.set(0, 0, 0);
 
     gameInfos.current.rolly.isWaintingForReset = false;
   }
