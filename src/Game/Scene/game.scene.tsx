@@ -1,16 +1,16 @@
 import { Canvas } from "@react-three/fiber";
-import RollyModel from "@/elements/Rolly/rolly.model";
-import BoardModel from "@/elements/Board/board.model";
-import StartModel from "@/elements/Start/start.model";
-import BucketsModel from "@/elements/Bucket/bucket.model";
+import RollyModel from "@/elements-3d/Rolly/rolly.model";
+import BoardModel from "@/elements-3d/Board/board.model";
+import StartModel from "@/elements-3d/Start/start.model";
+import BucketsModel from "@/elements-3d/Bucket/bucket.model";
 import { MOUSE } from "three";
 import { OrbitControls, Environment } from "@react-three/drei";
 import { useGame } from "./game.hook";
-import { useBoard } from "@/elements/Board/board.hook";
-import { useRolly } from "@/elements/Rolly/rolly.hook";
-import { useStart } from "@/elements/Start/start.hook";
-import { useBucket } from "@/elements/Bucket/bucket.hook";
-import { useRoll } from "@/elements/Rolly/roll.hook";
+import { useBoard } from "@/elements-3d/Board/board.hook";
+import { useRolly } from "@/elements-3d/Rolly/rolly.hook";
+import { useStart } from "@/elements-3d/Start/start.hook";
+import { useBucket } from "@/elements-3d/Bucket/bucket.hook";
+import { useRoll } from "@/elements-3d/Rolly/roll.hook";
 
 export default function GameScene() {
   const { gameInfos, refs } = useGame();

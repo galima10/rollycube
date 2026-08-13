@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import type { GameInfos } from "./game.types";
-import { createBoard } from "@/elements/Board/create-board.utils";
+import { createBoard } from "@/elements-3d/Board/create-board.utils";
 import type { Group, Mesh } from "three";
 import { Vector3 } from "three";
 

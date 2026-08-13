@@ -1,7 +1,7 @@
-import type { BoardType } from "@/elements/Board/board.types";
-import type { RollyType } from "@/elements/Rolly/rolly.types";
-import type { BucketsType } from "@/elements/Bucket/bucket.types";
-import type { StartType } from "@/elements/Start/start.types";
+import type { BoardType } from "@/elements-3d/Board/board.types";
+import type { RollyType } from "@/elements-3d/Rolly/rolly.types";
+import type { BucketsType } from "@/elements-3d/Bucket/bucket.types";
+import type { StartType } from "@/elements-3d/Start/start.types";
 
 export type GameStateType =
   | "startscreen"
