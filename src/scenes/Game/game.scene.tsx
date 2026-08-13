@@ -45,7 +45,7 @@ export default function GameScene() {
         position: [0, 2, 25],
         fov: 45,
         near: 0.1,
-        far: 100,
+        far: 200,
       }}
       onPointerUp={() => {
         board.interactions.handlePointerUp();

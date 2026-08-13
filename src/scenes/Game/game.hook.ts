@@ -18,7 +18,6 @@ export function useGame() {
       isFalling: false,
       isDragging: false,
       isUnGrabbing: false,
-      isWaintingForReset: false,
       actualPlace: {
         type: "start",
         id: null,

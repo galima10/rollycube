@@ -41,35 +41,30 @@ export function useRolly(
   });
 
   function syncRollyWorldToRollyBoard() {
-    if (!rollyBoardRef.current || !rollyWorldRef.current) return;
-    if (
-      gameInfos.current.rolly.actualPlace.type === "void" &&
-      !gameInfos.current.rolly.isFalling
-    ) {
-      rollyBoardRef.current.visible = true;
-      rollyWorldRef.current.visible = false;
-      rollyBoardRef.current.getWorldPosition(worldPosition);
-      rollyWorldRef.current.position.copy(worldPosition);
-      return;
-    }
-    if (
-      (gameInfos.current.rolly.actualPlace.type === "start" &&
-        rollyBoardRef.current.position.y === 0.6) ||
-      (gameInfos.current.rolly.actualPlace.type === "bucket" &&
-        rollyBoardRef.current.position.y === 1) ||
-      (gameInfos.current.rolly.actualPlace.type === "void" &&
-        gameInfos.current.rolly.isFalling)
-    ) {
-      rollyBoardRef.current.visible = false;
-      rollyWorldRef.current.visible = true;
-      return;
-    }
+    const board = rollyBoardRef.current;
+    const world = rollyWorldRef.current;
 
-    rollyBoardRef.current.visible = true;
-    rollyWorldRef.current.visible = false;
+    if (!board || !world) return;
 
-    rollyBoardRef.current.getWorldPosition(worldPosition);
-    rollyWorldRef.current.position.copy(worldPosition);
+    const { actualPlace, isFalling } = gameInfos.current.rolly;
+    const { type } = actualPlace;
+
+    const isRollyInVoid = type === "void";
+    const isAtStart = type === "start" && board.position.y === 0.6;
+    const isInBucket = type === "bucket" && board.position.y === 1;
+
+    const shouldShowWorld =
+      isAtStart || isInBucket || (isRollyInVoid && isFalling);
+
+    const shouldSyncWorldPosition = !shouldShowWorld;
+
+    board.visible = !shouldShowWorld;
+    world.visible = shouldShowWorld;
+
+    if (shouldSyncWorldPosition) {
+      board.getWorldPosition(worldPosition);
+      world.position.copy(worldPosition);
+    }
   }
 
   function handlePointerDown(e: ThreeEvent<PointerEvent>) {

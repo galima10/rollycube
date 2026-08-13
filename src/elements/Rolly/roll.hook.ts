@@ -67,6 +67,8 @@ export function useRoll(
   });
   const velocityY = useRef(0);
   const velocityOut = useRef(0);
+  const canReset = useRef(false);
+  const isWaintingForReset = useRef(false);
 
   function getTileAtPosition(x: number, z: number): number | null {
     const tiles = gameInfos.current.board.tiles.grid;
@@ -92,7 +94,7 @@ export function useRoll(
     const axis = board.leanAxis;
 
     const MIN_ROLL_SPEED = 5;
-    const MAX_ROLL_SPEED = 70;
+    const MAX_ROLL_SPEED = 200;
 
     if (!axis) return MIN_ROLL_SPEED;
 
@@ -167,6 +169,10 @@ export function useRoll(
   function fallRolly(delta: number) {
     if (!rollState.current.direction) return;
     if (gameInfos.current.rolly.actualPlace.type !== "void") return;
+    if (isWaintingForReset.current) return;
+    if (canReset.current) return;
+    rollState.current.isAnimating = false;
+    rollState.current.canStartAnimation = false;
 
     const distanceFromBoard = gameInfos.current.board.boardSize / 2 + 2;
 
@@ -186,8 +192,8 @@ export function useRoll(
     const target = distanceFromBoard * direction;
 
     // Accélération vers l'extérieur
-    const acceleration = 100;
-    const maxOutSpeed = 70;
+    const acceleration = 200;
+    const maxOutSpeed = 100;
 
     // Le mouvement horizontal + la chute commencent ensemble
 
@@ -221,11 +227,14 @@ export function useRoll(
     rollyWorldRef.current.position.y += velocityY.current * delta;
 
     // Limite de chute
-    if (rollyWorldRef.current.position.y <= -80) {
-      rollyWorldRef.current.position.y = -80;
+    if (rollyWorldRef.current.position.y <= -300) {
+      rollyWorldRef.current.position.y = -300;
       velocityY.current = 0;
       velocityOut.current = 0;
-      gameInfos.current.rolly.isWaintingForReset = true;
+      canReset.current = true;
+      setTimeout(() => {
+        isWaintingForReset.current = true;
+      }, 2000);
     }
   }
 
@@ -234,7 +243,9 @@ export function useRoll(
   }
 
   function backToStart() {
-    if (!gameInfos.current.rolly.isWaintingForReset) return;
+    if (!isWaintingForReset.current || !canReset.current) return;
+    rollState.current.canStartAnimation = true;
+
     gameInfos.current.rolly.actualPlace = {
       type: "start",
       id: null,
@@ -268,8 +279,8 @@ export function useRoll(
     rollyWorldRef.current.rotation.set(0, 0, 0);
     visualBoardRef.current.quaternion.identity();
     visualWorldRef.current.quaternion.identity();
-
-    gameInfos.current.rolly.isWaintingForReset = false;
+    isWaintingForReset.current = false;
+    canReset.current = false;
   }
 
   function resetRotationBucket(delta: number) {
@@ -284,7 +295,6 @@ export function useRoll(
     const t = MathUtils.clamp(delta * 10, 0, 1);
 
     visualWorldRef.current.quaternion.slerp(identityQuaternion.current, t);
-
     visualBoardRef.current.quaternion.copy(visualWorldRef.current.quaternion);
 
     if (
@@ -382,9 +392,14 @@ export function useRoll(
         type: "board",
         id: rollState.current.tileId,
       };
+      gameInfos.current.placeHovered = gameInfos.current.rolly.actualPlace;
     } else {
       gameInfos.current.rolly.actualPlace = {
         type: "void",
+        id: null,
+      };
+      gameInfos.current.placeHovered = {
+        type: null,
         id: null,
       };
     }
