@@ -72,35 +72,6 @@ export function useRolly(
     rollyWorldRef.current.position.copy(worldPosition);
   }
 
-  function backToStart() {
-    if (!gameInfos.current.rolly.isWaintingForReset) return;
-    console.log("reset");
-    gameInfos.current.rolly.actualPlace = {
-      type: "start",
-      id: null,
-    };
-    gameInfos.current.placeHovered = {
-      type: "start",
-      id: null,
-    };
-    gameInfos.current.rolly.isFalling = false;
-
-    rollyWorldRef.current.position.set(
-      gameInfos.current.start.positionX,
-      0.6,
-      0,
-    );
-    rollyBoardRef.current.position.set(
-      gameInfos.current.start.positionX,
-      0.6,
-      0,
-    );
-    rollyBoardRef.current.rotation.set(0, 0, 0);
-    rollyWorldRef.current.rotation.set(0, 0, 0);
-
-    gameInfos.current.rolly.isWaintingForReset = false;
-  }
-
   function handlePointerDown(e: ThreeEvent<PointerEvent>) {
     if (e.button !== 0) return;
     if (
@@ -225,7 +196,8 @@ export function useRolly(
         type: "board",
         id: tileId,
       };
-      colorTile(tileId, tileRefs, gameInfos);
+      const tileMesh = tileRefs.current.get(tileId);
+      colorTile(tileId, tileMesh, gameInfos);
     } else if (gameInfos.current.placeHovered.type === "start") {
       gameInfos.current.rolly.actualPlace = {
         type: "start",
@@ -344,7 +316,6 @@ export function useRolly(
         dragRolly,
         snapRolly,
         syncRollyWorldToRollyBoard,
-        backToStart,
       },
       interactions: {
         handlePointerDown,

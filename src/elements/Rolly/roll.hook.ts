@@ -48,6 +48,7 @@ export function useRoll(
     rollyWorldRef,
     tileRefs,
   } = refs;
+  const identityQuaternion = useRef(new Quaternion());
   const rollState = useRef<RollState>({
     isAnimating: false,
     canStartAnimation: true,
@@ -159,8 +160,6 @@ export function useRoll(
 
     if (Math.abs(pivotRef.current.rotation[axis] - target) < 0.001) {
       pivotRef.current.rotation[axis] = target;
-      const newRotation = visualBoardRef.current.rotation[axis] + target;
-      gameInfos.current.rolly.rotation[axis] = snapRotation(newRotation);
       finishRolling();
     }
   }
@@ -227,7 +226,78 @@ export function useRoll(
       velocityY.current = 0;
       velocityOut.current = 0;
       gameInfos.current.rolly.isWaintingForReset = true;
-      console.log("fin")
+    }
+  }
+
+  function normalizeAngle(angle: number) {
+    return Math.atan2(Math.sin(angle), Math.cos(angle));
+  }
+
+  function backToStart() {
+    if (!gameInfos.current.rolly.isWaintingForReset) return;
+    gameInfos.current.rolly.actualPlace = {
+      type: "start",
+      id: null,
+    };
+    gameInfos.current.placeHovered = {
+      type: "start",
+      id: null,
+    };
+    gameInfos.current.rolly.isFalling = false;
+    gameInfos.current.rolly.rotation = {
+      x: 0,
+      z: 0,
+    };
+    gameInfos.current.rolly.position = {
+      x: gameInfos.current.start.positionX,
+      y: 0.6,
+      z: 0,
+    };
+
+    rollyWorldRef.current.position.set(
+      gameInfos.current.start.positionX,
+      0.6,
+      0,
+    );
+    rollyBoardRef.current.position.set(
+      gameInfos.current.start.positionX,
+      0.6,
+      0,
+    );
+    rollyBoardRef.current.rotation.set(0, 0, 0);
+    rollyWorldRef.current.rotation.set(0, 0, 0);
+    visualBoardRef.current.quaternion.identity();
+    visualWorldRef.current.quaternion.identity();
+
+    gameInfos.current.rolly.isWaintingForReset = false;
+  }
+
+  function resetRotationBucket(delta: number) {
+    if (gameInfos.current.rolly.actualPlace.type !== "bucket") return;
+
+    if (
+      gameInfos.current.rolly.rotation.x === 0 &&
+      gameInfos.current.rolly.rotation.z === 0
+    )
+      return;
+
+    const t = MathUtils.clamp(delta * 10, 0, 1);
+
+    visualWorldRef.current.quaternion.slerp(identityQuaternion.current, t);
+
+    visualBoardRef.current.quaternion.copy(visualWorldRef.current.quaternion);
+
+    if (
+      visualWorldRef.current.quaternion.angleTo(identityQuaternion.current) <
+      0.001
+    ) {
+      visualWorldRef.current.quaternion.identity();
+      visualBoardRef.current.quaternion.identity();
+
+      gameInfos.current.rolly.rotation = {
+        x: 0,
+        z: 0,
+      };
     }
   }
 
@@ -251,19 +321,22 @@ export function useRoll(
 
     applyFinalRotation();
     resetPivot();
-    highlightCurrentTile();
+    colorCurrentTile();
     applyFinalPosition();
     resetRollState();
   }
 
   function applyFinalRotation() {
-    const rotation = gameInfos.current.rolly.rotation;
+    const pivotQuaternion = new Quaternion().setFromEuler(
+      pivotRef.current.rotation,
+    );
+    visualBoardRef.current.quaternion.premultiply(pivotQuaternion);
+    visualWorldRef.current.quaternion.copy(visualBoardRef.current.quaternion);
 
-    visualBoardRef.current.rotation.x = rotation.x;
-    visualBoardRef.current.rotation.z = rotation.z;
+    const euler = visualBoardRef.current.rotation;
 
-    visualWorldRef.current.rotation.x = rotation.x;
-    visualWorldRef.current.rotation.z = rotation.z;
+    gameInfos.current.rolly.rotation.x = snapRotation(normalizeAngle(euler.x));
+    gameInfos.current.rolly.rotation.z = snapRotation(normalizeAngle(euler.z));
   }
 
   function resetPivot() {
@@ -299,11 +372,12 @@ export function useRoll(
     rollState.current.targetPosition.z = null;
   }
 
-  function highlightCurrentTile() {
+  function colorCurrentTile() {
     const tileId = rollState.current.tileId;
 
     if (tileId) {
-      colorTile(tileId, tileRefs, gameInfos);
+      const tileMesh = tileRefs.current.get(tileId);
+      colorTile(tileId, tileMesh, gameInfos);
       gameInfos.current.rolly.actualPlace = {
         type: "board",
         id: rollState.current.tileId,
@@ -406,5 +480,5 @@ export function useRoll(
       offsetZ: gameInfos.current.rolly.edgeCenters[direction].z,
     };
   }
-  return { rollRolly, fallRolly };
+  return { rollRolly, fallRolly, backToStart, resetRotationBucket };
 }

@@ -30,7 +30,7 @@ export default function GameScene() {
   const { start } = useStart(gameInfos);
   const { buckets } = useBucket(gameInfos);
 
-  const { rollRolly, fallRolly } = useRoll(gameInfos, {
+  const { rollRolly, fallRolly, backToStart, resetRotationBucket } = useRoll(gameInfos, {
     visualBoardRef: refs.rolly.rollyBoardVisualRef,
     visualWorldRef: refs.rolly.rollyWorldVisualRef,
     pivotRef: refs.rolly.rollyPivotRef,
@@ -78,7 +78,8 @@ export default function GameScene() {
               rollRolly: rollRolly,
               snapRolly: rolly.animations.snapRolly,
               dragRolly: rolly.animations.dragRolly,
-              backToStart: rolly.animations.backToStart
+              backToStart: backToStart,
+              resetRotationBucket: resetRotationBucket
             },
             interactions: rolly.interactions,
           }}

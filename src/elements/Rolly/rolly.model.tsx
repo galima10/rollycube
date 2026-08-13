@@ -23,7 +23,8 @@ type RollyModelProps = ThreeElements["group"] & {
       syncRollyWorldToRollyBoard?: () => void;
       rollRolly?: (delta: number) => void;
       fallRolly?: (delta: number) => void;
-      backToStart?: () => void
+      backToStart?: () => void;
+      resetRotationBucket?: (delta: number) => void
     };
     interactions?: {
       handlePointerDown?: (e: ThreeEvent<PointerEvent>) => void;
@@ -53,6 +54,7 @@ export default function RollyModel({
     rolly.animations.syncRollyWorldToRollyBoard?.();
     rolly.animations.fallRolly?.(delta);
     rolly.animations.backToStart?.();
+    rolly.animations.resetRotationBucket?.(delta);
   });
   useEffect(() => {
     setColor(paintColor, paintRef.current);
