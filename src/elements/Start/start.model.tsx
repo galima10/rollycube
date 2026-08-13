@@ -1,5 +1,5 @@
 import { type ThreeElements, type ThreeEvent } from "@react-three/fiber";
-import type { GameInfos } from "@/scenes/Game/game.types";
+import type { GameInfos } from "@/Game/Scene/game.types";
 import { type RefObject } from "react";
 
 const tileSize = 1;

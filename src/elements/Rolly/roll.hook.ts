@@ -1,4 +1,4 @@
-import type { GameInfos } from "@/scenes/Game/game.types";
+import type { GameInfos } from "@/Game/Scene/game.types";
 import { type RefObject, useEffect, useRef } from "react";
 import type { RollDirection } from "./rolly.types";
 import {
@@ -9,7 +9,7 @@ import {
   Quaternion,
   type Vector3Tuple,
 } from "three";
-import type { AxisType } from "@/scenes/Game/game.types";
+import type { AxisType } from "@/Game/Scene/game.types";
 import { colorTile } from "../Board/color-tile.utils";
 
 interface RollState {

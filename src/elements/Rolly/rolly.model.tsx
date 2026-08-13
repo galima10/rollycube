@@ -8,7 +8,7 @@ import {
 import { getRollyMaterials } from "./rolly.materials";
 import { type Group, type Mesh } from "three";
 import { useEffect, type RefObject } from "react";
-import { setColor } from "@/scenes/Game/set-color.utils";
+import { setColor } from "@/Game/Scene/set-color.utils";
 
 type RollyModelProps = ThreeElements["group"] & {
   paintColor: string;

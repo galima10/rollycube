@@ -1,4 +1,4 @@
-import type { GameInfos } from "@/scenes/Game/game.types";
+import type { GameInfos } from "@/Game/Scene/game.types";
 import { useRef, type RefObject } from "react";
 import { type Group, MathUtils, type Mesh, MeshStandardMaterial } from "three";
 import type { ThreeEvent } from "@react-three/fiber";

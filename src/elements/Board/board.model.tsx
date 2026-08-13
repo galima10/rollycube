@@ -3,8 +3,8 @@ import { Edges } from "@react-three/drei";
 import type { BoardType } from "./board.types";
 import { type RefObject, useEffect } from "react";
 import { type ThreeEvent, useFrame } from "@react-three/fiber";
-import type { GameInfos } from "@/scenes/Game/game.types";
-import { setColor } from "@/scenes/Game/set-color.utils";
+import type { GameInfos } from "@/Game/Scene/game.types";
+import { setColor } from "@/Game/Scene/set-color.utils";
 
 export default function BoardModel({
   hoverTile,

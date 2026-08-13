@@ -1,4 +1,4 @@
-import type { GameInfos } from "@/scenes/Game/game.types";
+import type { GameInfos } from "@/Game/Scene/game.types";
 import { useRef, type RefObject } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import {
@@ -9,7 +9,7 @@ import {
   MeshStandardMaterial,
 } from "three";
 import type { RollyDragState } from "./rolly.types";
-import { setColor } from "@/scenes/Game/set-color.utils";
+import { setColor } from "@/Game/Scene/set-color.utils";
 import { colorTile } from "../Board/color-tile.utils";
 
 export function useRolly(

@@ -1,5 +1,5 @@
 import type { Mesh, MeshStandardMaterial, Vector3 } from "three";
-import type { PlaceType } from "@/scenes/Game/game.types";
+import type { PlaceType } from "@/Game/Scene/game.types";
 
 export type RollyGLTFResult = GLTF & {
   nodes: {

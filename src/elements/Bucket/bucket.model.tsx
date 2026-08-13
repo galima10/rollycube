@@ -4,9 +4,9 @@ import { BucketGLTFResult } from "./bucket.types";
 import { getBucketMaterials } from "./bucket.materials";
 import { useEffect, type RefObject } from "react";
 import { type Mesh } from "three";
-import type { GameInfos } from "@/scenes/Game/game.types";
+import type { GameInfos } from "@/Game/Scene/game.types";
 import type { BucketType } from "./bucket.types";
-import { setColor } from "@/scenes/Game/set-color.utils";
+import { setColor } from "@/Game/Scene/set-color.utils";
 
 type BucketModelProps = ThreeElements["group"] & {
   bucketsPaintRefs: RefObject<Map<number, Mesh>>;

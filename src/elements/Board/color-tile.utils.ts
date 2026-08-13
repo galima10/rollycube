@@ -1,6 +1,6 @@
 import { type Mesh, MeshStandardMaterial } from "three";
 import type { RefObject } from "react";
-import type { GameInfos } from "@/scenes/Game/game.types";
+import type { GameInfos } from "@/Game/Scene/game.types";
 
 export function colorTile(
   tileId: number,
