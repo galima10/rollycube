@@ -1,6 +1,6 @@
 
 export default function Hud(){
     return (
-        <div></div>
+        <div className="hud"></div>
     );
 };

@@ -93,8 +93,8 @@ export function useRoll(
     const board = gameInfos.current.board;
     const axis = board.leanAxis;
 
-    const MIN_ROLL_SPEED = 5;
-    const MAX_ROLL_SPEED = 200;
+    const MIN_ROLL_SPEED = 2;
+    const MAX_ROLL_SPEED = 250;
 
     if (!axis) return MIN_ROLL_SPEED;
 
