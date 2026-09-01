@@ -71,7 +71,9 @@ export function useRolly(
     if (e.button !== 0) return;
     if (
       gameInfos.current.rolly.isDragging ||
-      gameInfos.current.rolly.isUnGrabbing
+      gameInfos.current.rolly.isUnGrabbing ||
+      gameInfos.current.rolly.isRolling ||
+      gameInfos.current.rolly.isFalling
     )
       return;
     if (gameInfos.current.board.isLeaning) return;
